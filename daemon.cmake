@@ -76,6 +76,7 @@ target_compile_options(ot-ctl PRIVATE
 )
 
 target_link_libraries(ot-ctl
+    openthread-platform
     $<$<BOOL:${READLINE}>:${OT_READLINE}>
 )
 
