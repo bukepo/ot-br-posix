@@ -60,40 +60,6 @@ target_link_libraries(ot-cli
     ${READLINE_LINK_LIBRARIES}
 )
 
-add_executable(ot-ncp
-    main.c
-)
 
-set_target_properties(
-    ot-ncp
-    PROPERTIES
-        C_STANDARD 99
-        CXX_STANDARD 11
-)
+install(TARGETS ot-cli DESTINATION bin)
 
-target_include_directories(ot-ncp PRIVATE ${COMMON_INCLUDES})
-
-target_compile_definitions(ot-ncp PRIVATE
-    OPENTHREAD_POSIX_APP_TYPE=OT_POSIX_APP_TYPE_NCP
-    ${OT_PLATFORM_DEFINES}
-)
-
-target_compile_options(ot-ncp PRIVATE
-    ${OT_CFLAGS}
-)
-
-target_link_libraries(ot-ncp
-    openthread-ncp-ftd
-    ${OT_PLATFORM_LIB}
-    openthread-ftd
-    ${OT_PLATFORM_LIB}
-    mbedcrypto
-    openthread-ncp-ftd
-)
-
-install(TARGETS ot-cli ot-ncp
-    DESTINATION bin)
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    set(CPACK_PACKAGE_NAME "openthread-standalone")
-endif()

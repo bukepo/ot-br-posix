@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, The OpenThread Authors.
+#  Copyright (c) 2020, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -26,55 +26,35 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set(COMMON_INCLUDES
-    ${OT_PUBLIC_INCLUDES}
-    ${OT_PRIVATE_INCLUDES}
-    ${PROJECT_SOURCE_DIR}/src/core
-    ${PROJECT_SOURCE_DIR}/src/posix/platform
-    ${PROJECT_SOURCE_DIR}/src/posix/platform/include
+add_executable(ot-ncp
+    main.c
 )
 
-set(OT_READLINE "readline" CACHE STRING "set readline library name")
-set_property(CACHE OT_READLINE PROPERTY STRINGS "readline" "edit" "no")
+set_target_properties(
+    ot-ncp
+    PROPERTIES
+        C_STANDARD 99
+        CXX_STANDARD 11
+)
 
-if(OT_READLINE)
-    find_library(READLINE ${OT_READLINE})
+target_include_directories(ot-ncp PRIVATE ${COMMON_INCLUDES})
 
-    if (NOT READLINE)
-        message(FATAL_ERROR "Failed to find ${OT_READLINE}")
-    endif()
+target_compile_definitions(ot-ncp PRIVATE
+    OPENTHREAD_POSIX_APP_TYPE=OT_POSIX_APP_TYPE_NCP
+    ${OT_PLATFORM_DEFINES}
+)
 
-    find_library(NCURSES ncurses)
-    if (NOT NCURSES)
-        message(FATAL_ERROR "Failed to find ncurses")
-    endif()
+target_compile_options(ot-ncp PRIVATE
+    ${OT_CFLAGS}
+)
 
-    list(APPEND READLINE_LINK_LIBRARIES "${READLINE}" "${NCURSES}")
-endif()
+target_link_libraries(ot-ncp
+    openthread-ncp-ftd
+    ${OT_PLATFORM_LIB}
+    openthread-ftd
+    ${OT_PLATFORM_LIB}
+    mbedcrypto
+    openthread-ncp-ftd
+)
 
-if(OT_DAEMON)
-    include(daemon.cmake)
-
-    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        set(CPACK_PACKAGE_NAME "openthread-daemon")
-    endif()
-else()
-    if(OT_APP_CLI)
-        include(cli.cmake)
-    endif()
-
-    if(OT_APP_NCP)
-        include(ncp.cmake)
-    endif()
-
-    if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        set(CPACK_PACKAGE_NAME "openthread-standalone")
-    endif()
-endif()
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    set(CPACK_GENERATOR "DEB")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "OpenThread Authors <openthread-users@googlegroups.com")
-    set(CPACK_PACKAGE_CONTACT "OpenThread Authors <openthread-users@googlegroups.com")
-    include(CPack)
-endif()
+install(TARGETS ot-ncp DESTINATION bin)
