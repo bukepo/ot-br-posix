@@ -64,6 +64,8 @@ jobs:
       env:
         TEST_CASE: "mdns_service"
       run: script/test meshcop
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - name: MTD
       env:
         OT_CLI: "ot-cli-mtd"
