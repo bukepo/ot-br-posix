@@ -31,9 +31,7 @@
 #include "common/code_utils.hpp"
 #include "common/types.hpp"
 
-extern "C" {
-#include <cJSON.h>
-}
+#include <cjson/cJSON.h>
 
 namespace otbr {
 namespace rest {

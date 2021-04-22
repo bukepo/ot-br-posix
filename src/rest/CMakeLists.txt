@@ -26,6 +26,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+pkg_check_modules(CJSON REQUIRED libcjson)
+
 add_library(otbr-rest
     rest_web_server.cpp
     connection.cpp
@@ -36,13 +38,18 @@ add_library(otbr-rest
     response.cpp
 )
 
+target_include_directories(otbr-rest PRIVATE
+    ${CJSON_INCLUDE_DIRS}
+)
+
 target_link_libraries(otbr-rest
     PUBLIC
         http_parser
     PRIVATE
-        cjson
-        otbr-config
-        otbr-utils
+        $<$<BOOL:${CJSON_LIBRARY_DIRS}>:-L$<JOIN:${CJSON_LIBRARY_DIRS}," -L">>
+        ${CJSON_LIBRARIES}
         openthread-ftd
         openthread-posix
+        otbr-config
+        otbr-utils
 )

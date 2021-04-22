@@ -60,6 +60,7 @@ install_common_dependencies()
         libboost-system-dev \
         libavahi-common-dev \
         libavahi-client-dev \
+        libcjson-dev \
         libreadline-dev \
         libncurses-dev \
         libjsoncpp-dev \

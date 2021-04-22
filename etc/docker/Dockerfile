@@ -25,7 +25,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-ARG BASE_IMAGE=ubuntu:bionic
+ARG BASE_IMAGE=ubuntu:focal
 FROM ${BASE_IMAGE}
 
 ARG INFRA_IF_NAME
@@ -63,10 +63,26 @@ ENV OTBR_DOCKER_REQS sudo
 ENV OTBR_DOCKER_DEPS git ca-certificates
 
 # Required and installed during build (script/bootstrap), could be removed
-ENV OTBR_BUILD_DEPS apt-utils build-essential psmisc ninja-build cmake wget ca-certificates \
-  libreadline-dev libncurses-dev libcpputest-dev libdbus-1-dev libavahi-common-dev \
-  libavahi-client-dev libboost-dev libboost-filesystem-dev libboost-system-dev libjsoncpp-dev \
-  libnetfilter-queue-dev
+ENV OTBR_BUILD_DEPS \
+      apt-utils \
+      build-essential \
+      ca-certificates \
+      cmake \
+      libavahi-client-dev \
+      libavahi-common-dev \
+      libboost-dev \
+      libboost-filesystem-dev \
+      libboost-system-dev \
+      libcjson-dev \
+      libcpputest-dev \
+      libdbus-1-dev \
+      libjsoncpp-dev \
+      libncurses-dev \
+      libnetfilter-queue-dev \
+      libreadline-dev \
+      ninja-build \
+      psmisc \
+      wget
 
 # Required for OpenThread Backbone CI
 ENV OTBR_OT_BACKBONE_CI_DEPS curl lcov wget build-essential

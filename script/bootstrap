@@ -90,8 +90,8 @@ install_packages_apt()
         fi
     }
 
-    # libjsoncpp
-    sudo apt-get install --no-install-recommends -y libjsoncpp1 libjsoncpp-dev
+    # json
+    sudo apt-get install --no-install-recommends -y libjsoncpp1 libjsoncpp-dev libcjson-dev
 
     # reference device
     without REFERENCE_DEVICE || sudo apt-get install --no-install-recommends -y radvd dnsutils
@@ -125,7 +125,7 @@ install_packages_rpm()
 
 install_packages_brew()
 {
-    brew install boost cmake cpputest dbus jsoncpp ninja
+    brew install boost cmake cpputest dbus jsoncpp ninja cjson
 }
 
 install_packages_source()

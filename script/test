@@ -113,6 +113,10 @@ do_build()
         ${otbr_options[@]+"${otbr_options[@]}"}
     )
 
+    if [[ $OSTYPE == "darwin"* ]]; then
+        otbr_options+=("-DOTBR_MDNS=OFF")
+    fi
+
     ./script/cmake-build "${otbr_options[@]}"
 }
 
