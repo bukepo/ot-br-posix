@@ -139,7 +139,10 @@ HdlcInterface::HdlcInterface(SpinelInterface::ReceiveFrameCallback aCallback,
     mInterfaceMetrics.mRcpInterfaceType = OT_POSIX_RCP_BUS_UART;
 }
 
-void HdlcInterface::OnRcpReset(void) { mHdlcDecoder.Reset(); }
+void HdlcInterface::OnRcpReset(void)
+{
+    mHdlcDecoder.Reset();
+}
 
 otError HdlcInterface::Init(const Url::Url &aRadioUrl)
 {
@@ -148,7 +151,7 @@ otError HdlcInterface::Init(const Url::Url &aRadioUrl)
 
     VerifyOrExit(mSockFd == -1, error = OT_ERROR_ALREADY);
 
-    VerifyOrDie(stat(aRadioUrl.GetPath(), &st) == 0, OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie(stat(aRadioUrl.GetPath(), &st) == 0, OT_EXIT_INVALID_ARGUMENTS);
 
     if (S_ISCHR(st.st_mode))
     {
@@ -174,9 +177,15 @@ exit:
     return error;
 }
 
-HdlcInterface::~HdlcInterface(void) { Deinit(); }
+HdlcInterface::~HdlcInterface(void)
+{
+    Deinit();
+}
 
-void HdlcInterface::Deinit(void) { CloseFile(); }
+void HdlcInterface::Deinit(void)
+{
+    CloseFile();
+}
 
 void HdlcInterface::Read(void)
 {
@@ -191,11 +200,14 @@ void HdlcInterface::Read(void)
     }
     else if ((rval < 0) && (errno != EAGAIN) && (errno != EINTR))
     {
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 }
 
-void HdlcInterface::Decode(const uint8_t *aBuffer, uint16_t aLength) { mHdlcDecoder.Decode(aBuffer, aLength); }
+void HdlcInterface::Decode(const uint8_t *aBuffer, uint16_t aLength)
+{
+    mHdlcDecoder.Decode(aBuffer, aLength);
+}
 
 otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 {
@@ -234,7 +246,7 @@ otError HdlcInterface::Write(const uint8_t *aFrame, uint16_t aLength)
         }
         else if (rval < 0)
         {
-            VerifyOrDie((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR), OT_EXIT_ERROR_ERRNO);
+            otVerifyOrDie((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR), OT_EXIT_ERROR_ERRNO);
         }
 
         SuccessOrExit(error = WaitForWritable());
@@ -308,11 +320,11 @@ otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
         }
         else if (FD_ISSET(mSockFd, &error_fds))
         {
-            DieNowWithMessage("NCP error", OT_EXIT_FAILURE);
+            otDieNowWithMessage("NCP error", OT_EXIT_FAILURE);
         }
         else
         {
-            DieNow(OT_EXIT_FAILURE);
+            otDieNow(OT_EXIT_FAILURE);
         }
     }
     else if (rval == 0)
@@ -321,7 +333,7 @@ otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
     }
     else if (errno != EINTR)
     {
-        DieNowWithMessage("wait response", OT_EXIT_FAILURE);
+        otDieNowWithMessage("wait response", OT_EXIT_FAILURE);
     }
 #endif // OPENTHREAD_POSIX_VIRTUAL_TIME
 
@@ -377,7 +389,7 @@ otError HdlcInterface::WaitForWritable(void)
             }
             else if (FD_ISSET(mSockFd, &errorFds))
             {
-                DieNow(OT_EXIT_FAILURE);
+                otDieNow(OT_EXIT_FAILURE);
             }
             else
             {
@@ -386,7 +398,7 @@ otError HdlcInterface::WaitForWritable(void)
         }
         else if ((rval < 0) && (errno != EINTR))
         {
-            DieNow(OT_EXIT_ERROR_ERRNO);
+            otDieNow(OT_EXIT_ERROR_ERRNO);
         }
 
         now = otPlatTimeGet();
@@ -450,7 +462,7 @@ int HdlcInterface::OpenFile(const Url::Url &aRadioUrl)
             }
             else
             {
-                DieNow(OT_EXIT_INVALID_ARGUMENTS);
+                otDieNow(OT_EXIT_INVALID_ARGUMENTS);
             }
         }
 
@@ -468,7 +480,7 @@ int HdlcInterface::OpenFile(const Url::Url &aRadioUrl)
             tios.c_cflag |= CSTOPB;
             break;
         default:
-            DieNow(OT_EXIT_INVALID_ARGUMENTS);
+            otDieNow(OT_EXIT_INVALID_ARGUMENTS);
             break;
         }
 
@@ -560,7 +572,7 @@ int HdlcInterface::OpenFile(const Url::Url &aRadioUrl)
             break;
 #endif
         default:
-            DieNow(OT_EXIT_INVALID_ARGUMENTS);
+            otDieNow(OT_EXIT_INVALID_ARGUMENTS);
             break;
         }
 
@@ -579,7 +591,7 @@ int HdlcInterface::OpenFile(const Url::Url &aRadioUrl)
 exit:
     if (rval != 0)
     {
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 
     return fd;
@@ -612,7 +624,7 @@ int HdlcInterface::ForkPty(const Url::Url &aRadioUrl)
         cfmakeraw(&tios);
         tios.c_cflag = CS8 | HUPCL | CREAD | CLOCAL;
 
-        VerifyOrDie((pid = forkpty(&fd, nullptr, &tios, nullptr)) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie((pid = forkpty(&fd, nullptr, &tios, nullptr)) != -1, OT_EXIT_ERROR_ERRNO);
     }
 
     if (0 == pid)
@@ -635,15 +647,15 @@ int HdlcInterface::ForkPty(const Url::Url &aRadioUrl)
         }
         else
         {
-            DieNowWithMessage("Too many arguments!", OT_EXIT_INVALID_ARGUMENTS);
+            otDieNowWithMessage("Too many arguments!", OT_EXIT_INVALID_ARGUMENTS);
         }
 
-        VerifyOrDie((rval = execvp(argv[0], argv)) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie((rval = execvp(argv[0], argv)) != -1, OT_EXIT_ERROR_ERRNO);
     }
     else
     {
-        VerifyOrDie((rval = fcntl(fd, F_GETFL)) != -1, OT_EXIT_ERROR_ERRNO);
-        VerifyOrDie((rval = fcntl(fd, F_SETFL, rval | O_NONBLOCK | O_CLOEXEC)) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie((rval = fcntl(fd, F_GETFL)) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie((rval = fcntl(fd, F_SETFL, rval | O_NONBLOCK | O_CLOEXEC)) != -1, OT_EXIT_ERROR_ERRNO);
     }
 
     return fd;

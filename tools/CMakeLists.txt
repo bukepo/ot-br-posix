@@ -30,7 +30,7 @@ add_executable(pskc
     pskc.cpp
 )
 target_link_libraries(pskc PRIVATE
-    otbr-config
+    ot-posix-config
     otbr-common
     otbr-utils
     mbedtls
@@ -40,7 +40,7 @@ add_executable(steering-data
     steering_data.cpp
 )
 target_link_libraries(steering-data PRIVATE
-    otbr-config
+    ot-posix-config
     otbr-common
     otbr-utils
     mbedtls

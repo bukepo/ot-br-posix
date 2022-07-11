@@ -31,7 +31,7 @@ project(openthread-br VERSION 0.3.0)
 
 add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wuninitialized -Wno-missing-braces)
 
-add_library(otbr-config INTERFACE)
+add_library(ot-posix-config INTERFACE)
 
 set(OTBR_INFRA_IF_NAME "wlan0" CACHE STRING "The infrastructure interface name")
 set(OTBR_VENDOR_NAME "OpenThread" CACHE STRING "The vendor name")
@@ -59,8 +59,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (OTBR_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     message(STATUS "Coverage: ON")
-    target_compile_options(otbr-config INTERFACE -g -O0 --coverage)
-    target_link_libraries(otbr-config INTERFACE --coverage)
+    target_compile_options(ot-posix-config INTERFACE -g -O0 --coverage)
+    target_link_libraries(ot-posix-config INTERFACE --coverage)
 endif()
 
 message(STATUS "OTBR package name: ${OTBR_NAME}")
@@ -81,11 +81,11 @@ endif()
 
 message(STATUS "Version: ${OTBR_VERSION}")
 
-target_include_directories(otbr-config INTERFACE
+target_include_directories(ot-posix-config INTERFACE
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/src
 )
-target_compile_definitions(otbr-config INTERFACE
+target_compile_definitions(ot-posix-config INTERFACE
     "OTBR_VENDOR_NAME=\"${OTBR_VENDOR_NAME}\""
     "OTBR_PRODUCT_NAME=\"${OTBR_PRODUCT_NAME}\""
     "OTBR_PACKAGE_NAME=\"${OTBR_NAME}\""
@@ -95,7 +95,7 @@ target_compile_definitions(otbr-config INTERFACE
 )
 
 if(BUILD_SHARED_LIBS)
-    target_link_libraries(otbr-config INTERFACE -Wl,--unresolved-symbols=ignore-in-shared-libs)
+    target_link_libraries(ot-posix-config INTERFACE -Wl,--unresolved-symbols=ignore-in-shared-libs)
 endif()
 
 include(GNUInstallDirs)
@@ -106,11 +106,9 @@ if(SYSTEMD_FOUND)
     pkg_get_variable(OTBR_SYSTEMD_UNIT_DIR systemd systemdsystemunitdir)
 endif()
 
-
 add_subdirectory(third_party EXCLUDE_FROM_ALL)
 add_subdirectory(src)
 add_subdirectory(tools)
-
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)

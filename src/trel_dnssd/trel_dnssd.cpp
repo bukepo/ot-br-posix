@@ -44,7 +44,7 @@
 #include <openthread/link.h>
 #include <openthread/platform/trel.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "utils/hex.hpp"
 #include "utils/string_utils.hpp"
 

@@ -81,13 +81,16 @@ uint64_t otPlatTimeGet(void)
 {
     struct timespec now;
 
-    VerifyOrDie(clock_gettime(OT_POSIX_CLOCK_ID, &now) == 0, OT_EXIT_FAILURE);
+    otVerifyOrDie(clock_gettime(OT_POSIX_CLOCK_ID, &now) == 0, OT_EXIT_FAILURE);
 
     return static_cast<uint64_t>(now.tv_sec) * US_PER_S + static_cast<uint64_t>(now.tv_nsec) / NS_PER_US;
 }
 #endif // !OPENTHREAD_POSIX_VIRTUAL_TIME
 
-static uint64_t platformAlarmGetNow(void) { return otPlatTimeGet() * sSpeedUpFactor; }
+static uint64_t platformAlarmGetNow(void)
+{
+    return otPlatTimeGet() * sSpeedUpFactor;
+}
 
 void platformAlarmInit(uint32_t aSpeedUpFactor, int aRealTimeSignal)
 {
@@ -110,13 +113,13 @@ void platformAlarmInit(uint32_t aSpeedUpFactor, int aRealTimeSignal)
         sa.sa_sigaction = microTimerHandler;
         sigemptyset(&sa.sa_mask);
 
-        VerifyOrDie(sigaction(aRealTimeSignal, &sa, nullptr) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(sigaction(aRealTimeSignal, &sa, nullptr) != -1, OT_EXIT_ERROR_ERRNO);
 
         sev.sigev_notify          = SIGEV_SIGNAL;
         sev.sigev_signo           = aRealTimeSignal;
         sev.sigev_value.sival_ptr = &sMicroTimer;
 
-        VerifyOrDie(timer_create(CLOCK_MONOTONIC, &sev, &sMicroTimer) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(timer_create(CLOCK_MONOTONIC, &sev, &sMicroTimer) != -1, OT_EXIT_ERROR_ERRNO);
 
         sRealTimeSignal = aRealTimeSignal;
 #endif // OPENTHREAD_CONFIG_PLATFORM_USEC_TIMER_ENABLE && !OPENTHREAD_POSIX_VIRTUAL_TIME
@@ -124,11 +127,14 @@ void platformAlarmInit(uint32_t aSpeedUpFactor, int aRealTimeSignal)
 #endif // __linux__
     else
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
 }
 
-uint32_t otPlatAlarmMilliGetNow(void) { return (uint32_t)(platformAlarmGetNow() / US_PER_MS); }
+uint32_t otPlatAlarmMilliGetNow(void)
+{
+    return (uint32_t)(platformAlarmGetNow() / US_PER_MS);
+}
 
 void otPlatAlarmMilliStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 {
@@ -146,7 +152,10 @@ void otPlatAlarmMilliStop(otInstance *aInstance)
 }
 
 #if OPENTHREAD_CONFIG_PLATFORM_USEC_TIMER_ENABLE
-uint32_t otPlatAlarmMicroGetNow(void) { return static_cast<uint32_t>(platformAlarmGetNow()); }
+uint32_t otPlatAlarmMicroGetNow(void)
+{
+    return static_cast<uint32_t>(platformAlarmGetNow());
+}
 
 void otPlatAlarmMicroStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 {

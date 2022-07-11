@@ -30,7 +30,7 @@ add_library(otbr-ubus
     otubus.cpp
 )
 target_link_libraries(otbr-ubus PRIVATE
-    otbr-config
+    ot-posix-config
     openthread-ftd
     openthread-posix
     ubox

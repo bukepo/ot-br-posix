@@ -36,7 +36,7 @@
 #include <dbus/dbus.h>
 #include <unistd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "dbus/client/thread_api_dbus.hpp"
 #include "dbus/common/constants.hpp"
 

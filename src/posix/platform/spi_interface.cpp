@@ -118,7 +118,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
     spiGpioResetDevice = aRadioUrl.GetValue("gpio-reset-device");
     if (!spiGpioIntDevice || !spiGpioResetDevice)
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
 
     if ((value = aRadioUrl.GetValue("gpio-int-line")))
@@ -127,7 +127,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
     }
     else
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
     if ((value = aRadioUrl.GetValue("gpio-reset-line")))
     {
@@ -135,7 +135,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
     }
     else
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
     if ((value = aRadioUrl.GetValue("spi-mode")))
     {
@@ -162,7 +162,7 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
         spiSmallPacketSize = static_cast<uint8_t>(atoi(value));
     }
 
-    VerifyOrDie(spiAlignAllowance <= kSpiAlignAllowanceMax, OT_EXIT_FAILURE);
+    otVerifyOrDie(spiAlignAllowance <= kSpiAlignAllowanceMax, OT_EXIT_FAILURE);
 
     mSpiResetDelay      = spiResetDelay;
     mSpiCsDelayUs       = spiCsDelay;
@@ -191,7 +191,10 @@ otError SpiInterface::Init(const Url::Url &aRadioUrl)
     return OT_ERROR_NONE;
 }
 
-SpiInterface::~SpiInterface(void) { Deinit(); }
+SpiInterface::~SpiInterface(void)
+{
+    Deinit();
+}
 
 void SpiInterface::Deinit(void)
 {
@@ -228,7 +231,7 @@ int SpiInterface::SetupGpioHandle(int aFd, uint8_t aLine, uint32_t aHandleFlags,
 
     snprintf(req.consumer_label, sizeof(req.consumer_label), "%s", aLabel);
 
-    VerifyOrDie((ret = ioctl(aFd, GPIO_GET_LINEHANDLE_IOCTL, &req)) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((ret = ioctl(aFd, GPIO_GET_LINEHANDLE_IOCTL, &req)) != -1, OT_EXIT_ERROR_ERRNO);
 
     return req.fd;
 }
@@ -249,7 +252,7 @@ int SpiInterface::SetupGpioEvent(int         aFd,
     req.eventflags  = aEventFlags;
     snprintf(req.consumer_label, sizeof(req.consumer_label), "%s", aLabel);
 
-    VerifyOrDie((ret = ioctl(aFd, GPIO_GET_LINEEVENT_IOCTL, &req)) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((ret = ioctl(aFd, GPIO_GET_LINEEVENT_IOCTL, &req)) != -1, OT_EXIT_ERROR_ERRNO);
 
     return req.fd;
 }
@@ -259,14 +262,14 @@ void SpiInterface::SetGpioValue(int aFd, uint8_t aValue)
     struct gpiohandle_data data;
 
     data.values[0] = aValue;
-    VerifyOrDie(ioctl(aFd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(aFd, GPIOHANDLE_SET_LINE_VALUES_IOCTL, &data) != -1, OT_EXIT_ERROR_ERRNO);
 }
 
 uint8_t SpiInterface::GetGpioValue(int aFd)
 {
     struct gpiohandle_data data;
 
-    VerifyOrDie(ioctl(aFd, GPIOHANDLE_GET_LINE_VALUES_IOCTL, &data) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(aFd, GPIOHANDLE_GET_LINE_VALUES_IOCTL, &data) != -1, OT_EXIT_ERROR_ERRNO);
     return data.values[0];
 }
 
@@ -277,8 +280,8 @@ void SpiInterface::InitResetPin(const char *aCharDev, uint8_t aLine)
 
     otLogDebgPlat("InitResetPin: charDev=%s, line=%" PRIu8, aCharDev, aLine);
 
-    VerifyOrDie(aCharDev != nullptr, OT_EXIT_INVALID_ARGUMENTS);
-    VerifyOrDie((fd = open(aCharDev, O_RDWR)) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(aCharDev != nullptr, OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie((fd = open(aCharDev, O_RDWR)) != -1, OT_EXIT_ERROR_ERRNO);
     mResetGpioValueFd = SetupGpioHandle(fd, aLine, GPIOHANDLE_REQUEST_OUTPUT, label);
 
     close(fd);
@@ -291,8 +294,8 @@ void SpiInterface::InitIntPin(const char *aCharDev, uint8_t aLine)
 
     otLogDebgPlat("InitIntPin: charDev=%s, line=%" PRIu8, aCharDev, aLine);
 
-    VerifyOrDie(aCharDev != nullptr, OT_EXIT_INVALID_ARGUMENTS);
-    VerifyOrDie((fd = open(aCharDev, O_RDWR)) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(aCharDev != nullptr, OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie((fd = open(aCharDev, O_RDWR)) != -1, OT_EXIT_ERROR_ERRNO);
 
     mIntGpioValueFd = SetupGpioEvent(fd, aLine, GPIOHANDLE_REQUEST_INPUT, GPIOEVENT_REQUEST_FALLING_EDGE, label);
 
@@ -306,8 +309,8 @@ void SpiInterface::InitSpiDev(const char *aPath, uint8_t aMode, uint32_t aSpeed)
 
     otLogDebgPlat("InitSpiDev: path=%s, mode=%" PRIu8 ", speed=%" PRIu32, aPath, aMode, aSpeed);
 
-    VerifyOrDie((aPath != nullptr) && (aMode <= kSpiModeMax), OT_EXIT_INVALID_ARGUMENTS);
-    VerifyOrDie((fd = open(aPath, O_RDWR | O_CLOEXEC)) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((aPath != nullptr) && (aMode <= kSpiModeMax), OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie((fd = open(aPath, O_RDWR | O_CLOEXEC)) != -1, OT_EXIT_ERROR_ERRNO);
     VerifyOrExit(ioctl(fd, SPI_IOC_WR_MODE, &aMode) != -1, LogError("ioctl(SPI_IOC_WR_MODE)"));
     VerifyOrExit(ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &aSpeed) != -1, LogError("ioctl(SPI_IOC_WR_MAX_SPEED_HZ)"));
     VerifyOrExit(ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &wordBits) != -1, LogError("ioctl(SPI_IOC_WR_BITS_PER_WORD)"));
@@ -481,7 +484,7 @@ otError SpiInterface::PushPullSpi(void)
         }
 
         LogStats();
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 
     // Account for misalignment (0xFF bytes at the start)
@@ -722,7 +725,10 @@ void SpiInterface::UpdateFdSet(fd_set &aReadFdSet, fd_set &aWriteFdSet, int &aMa
     }
 }
 
-void SpiInterface::Process(const RadioProcessContext &aContext) { Process(aContext.mReadFdSet, aContext.mWriteFdSet); }
+void SpiInterface::Process(const RadioProcessContext &aContext)
+{
+    Process(aContext.mReadFdSet, aContext.mWriteFdSet);
+}
 
 void SpiInterface::Process(const fd_set *aReadFdSet, const fd_set *aWriteFdSet)
 {
@@ -735,7 +741,7 @@ void SpiInterface::Process(const fd_set *aReadFdSet, const fd_set *aWriteFdSet)
         otLogDebgPlat("Process(): Interrupt.");
 
         // Read event data to clear interrupt.
-        VerifyOrDie(read(mIntGpioValueFd, &event, sizeof(event)) != -1, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(read(mIntGpioValueFd, &event, sizeof(event)) != -1, OT_EXIT_ERROR_ERRNO);
     }
 
     // Service the SPI port if we can receive a packet or we have a packet to be sent.
@@ -783,7 +789,7 @@ otError SpiInterface::WaitForFrame(uint64_t aTimeoutUs)
         }
         else if (errno != EINTR)
         {
-            DieNow(OT_EXIT_ERROR_ERRNO);
+            otDieNow(OT_EXIT_ERROR_ERRNO);
         }
 
         now = otPlatTimeGet();

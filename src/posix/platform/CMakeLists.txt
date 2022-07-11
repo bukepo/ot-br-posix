@@ -26,10 +26,6 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set(OT_PLATFORM_LIB "openthread-posix" PARENT_SCOPE)
-
-add_library(ot-posix-config INTERFACE)
-
 option(OT_DAEMON "Enable daemon mode" OFF)
 if(OT_DAEMON)
     target_compile_definitions(ot-posix-config
@@ -135,9 +131,9 @@ target_link_libraries(openthread-posix
         openthread-platform
     PRIVATE
         openthread-url
+        ot-posix-config
         ot-config-ftd
         ot-config
-        ot-posix-config
         util
         $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Linux>:rt>
 )
@@ -166,7 +162,11 @@ target_include_directories(openthread-posix PRIVATE
     ${OT_PUBLIC_INCLUDES}
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/src/core
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/third_party/mbedtls/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src/core
     PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/src/posix/platform/include
 )

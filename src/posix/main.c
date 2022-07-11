@@ -275,8 +275,8 @@ static void ParseArg(int aArgCount, char *aArgVector[], PosixConfig *aConfig)
 
     for (; optind < aArgCount; optind++)
     {
-        VerifyOrDie(aConfig->mPlatformConfig.mRadioUrlNum < OT_ARRAY_LENGTH(aConfig->mPlatformConfig.mRadioUrls),
-                    OT_EXIT_INVALID_ARGUMENTS);
+        otVerifyOrDie(aConfig->mPlatformConfig.mRadioUrlNum < OT_ARRAY_LENGTH(aConfig->mPlatformConfig.mRadioUrls),
+                      OT_EXIT_INVALID_ARGUMENTS);
         aConfig->mPlatformConfig.mRadioUrls[aConfig->mPlatformConfig.mRadioUrlNum++] = aArgVector[optind];
     }
 
@@ -295,7 +295,7 @@ static otInstance *InitInstance(PosixConfig *aConfig)
     IgnoreError(otLoggingSetLevel(aConfig->mLogLevel));
 
     instance = otSysInit(&aConfig->mPlatformConfig);
-    VerifyOrDie(instance != NULL, OT_EXIT_FAILURE);
+    otVerifyOrDie(instance != NULL, OT_EXIT_FAILURE);
     syslog(LOG_INFO, "Thread interface: %s", otSysGetThreadNetifName());
 
     if (aConfig->mPrintRadioVersion)
@@ -315,7 +315,10 @@ static otInstance *InitInstance(PosixConfig *aConfig)
     return instance;
 }
 
-void otTaskletsSignalPending(otInstance *aInstance) { OT_UNUSED_VARIABLE(aInstance); }
+void otTaskletsSignalPending(otInstance *aInstance)
+{
+    OT_UNUSED_VARIABLE(aInstance);
+}
 
 void otPlatReset(otInstance *aInstance)
 {
@@ -348,6 +351,7 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
     OT_UNUSED_VARIABLE(aArgs);
 
     exit(EXIT_SUCCESS);
+    return OT_ERROR_NONE;
 }
 #endif
 

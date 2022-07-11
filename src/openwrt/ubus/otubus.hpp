@@ -44,7 +44,7 @@
 #include <openthread/netdiag.h>
 #include <openthread/udp.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/mainloop.hpp"
 #include "ncp/ncp_openthread.hpp"
 

@@ -219,15 +219,16 @@ void MulticastRoutingManager::InitMulticastRouterSock(void)
 
     // Create a Multicast Routing socket
     mMulticastRouterSock = SocketWithCloseExec(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6, kSocketBlock);
-    VerifyOrDie(mMulticastRouterSock != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(mMulticastRouterSock != -1, OT_EXIT_ERROR_ERRNO);
 
     // Enable Multicast Forwarding in Kernel
-    VerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_INIT, &one, sizeof(one)), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_INIT, &one, sizeof(one)),
+                  OT_EXIT_ERROR_ERRNO);
 
     // Filter all ICMPv6 messages
     ICMP6_FILTER_SETBLOCKALL(&filter);
-    VerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)&filter, sizeof(filter)),
-                OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)&filter, sizeof(filter)),
+                  OT_EXIT_ERROR_ERRNO);
 
     memset(&mif6ctl, 0, sizeof(mif6ctl));
     mif6ctl.mif6c_flags     = 0;
@@ -237,16 +238,16 @@ void MulticastRoutingManager::InitMulticastRouterSock(void)
     // Add Thread network interface to MIF
     mif6ctl.mif6c_mifi = kMifIndexThread;
     mif6ctl.mif6c_pifi = if_nametoindex(gNetifName);
-    VerifyOrDie(mif6ctl.mif6c_pifi > 0, OT_EXIT_ERROR_ERRNO);
-    VerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_ADD_MIF, &mif6ctl, sizeof(mif6ctl)),
-                OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(mif6ctl.mif6c_pifi > 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_ADD_MIF, &mif6ctl, sizeof(mif6ctl)),
+                  OT_EXIT_ERROR_ERRNO);
 
     // Add Backbone network interface to MIF
     mif6ctl.mif6c_mifi = kMifIndexBackbone;
     mif6ctl.mif6c_pifi = if_nametoindex(gBackboneNetifName);
-    VerifyOrDie(mif6ctl.mif6c_pifi > 0, OT_EXIT_ERROR_ERRNO);
-    VerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_ADD_MIF, &mif6ctl, sizeof(mif6ctl)),
-                OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(mif6ctl.mif6c_pifi > 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == setsockopt(mMulticastRouterSock, IPPROTO_IPV6, MRT6_ADD_MIF, &mif6ctl, sizeof(mif6ctl)),
+                  OT_EXIT_ERROR_ERRNO);
 }
 
 void MulticastRoutingManager::FinalizeMulticastRouterSock(void)

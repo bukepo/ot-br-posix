@@ -28,7 +28,7 @@
 
 #include "client_error.hpp"
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "dbus/common/dbus_message_helper.hpp"
 
 #define OTBR_OPENTHREAD_ERROR_PREFIX "io.openthread.Error"

@@ -33,7 +33,7 @@
 
 #include "utils/pskc.hpp"
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 namespace otbr {

@@ -94,6 +94,12 @@ if (NOT OT_POSIX_SETTINGS_PATH)
     set(OT_POSIX_SETTINGS_PATH "\"/var/lib/thread\"" CACHE STRING "set the directory to store Thread data" FORCE)
 endif()
 
+set(OT_PLATFORM "external")
+
+if(NOT OT_CONFIG)
+    set(OT_CONFIG "openthread-core-posix-config.h")
+endif()
+
 add_subdirectory(repo EXCLUDE_FROM_ALL)
 
 target_compile_definitions(ot-config INTERFACE
@@ -103,6 +109,9 @@ target_compile_definitions(ot-config INTERFACE
     "-DOPENTHREAD_CONFIG_TCP_ENABLE=0"
     "-DOPENTHREAD_POSIX_CONFIG_FILE=\"${PROJECT_SOURCE_DIR}/src/agent/openthread-otbr-posix-config.h\""
 )
+
+target_include_directories(ot-config INTERFACE
+    ${PROJECT_SOURCE_DIR}/src/posix/platform)
 
 if (NOT OT_THREAD_VERSION STREQUAL "1.1")
     target_compile_definitions(ot-config INTERFACE

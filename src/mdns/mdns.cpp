@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "utils/dns_utils.hpp"
 
 namespace otbr {

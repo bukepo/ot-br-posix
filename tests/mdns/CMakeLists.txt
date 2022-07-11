@@ -31,7 +31,7 @@ add_executable(otbr-test-mdns
 )
 
 target_link_libraries(otbr-test-mdns PRIVATE
-    otbr-config
+    ot-posix-config
     otbr-mdns
 )
 

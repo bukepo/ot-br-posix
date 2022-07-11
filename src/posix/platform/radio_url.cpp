@@ -105,9 +105,9 @@ namespace Posix {
 
 RadioUrl::RadioUrl(const char *aUrl)
 {
-    VerifyOrDie(strnlen(aUrl, sizeof(mUrl)) < sizeof(mUrl), OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie(strnlen(aUrl, sizeof(mUrl)) < sizeof(mUrl), OT_EXIT_INVALID_ARGUMENTS);
     strncpy(mUrl, aUrl, sizeof(mUrl) - 1);
-    SuccessOrDie(Url::Url::Init(mUrl));
+    otSuccessOrDie(Url::Url::Init(mUrl));
 }
 
 } // namespace Posix

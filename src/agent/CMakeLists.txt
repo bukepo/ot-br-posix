@@ -40,15 +40,17 @@ target_link_libraries(otbr-agent PRIVATE
     $<$<BOOL:${OTBR_MDNS}>:otbr-mdns>
     $<$<BOOL:${OTBR_OPENWRT}>:otbr-ubus>
     $<$<BOOL:${OTBR_REST}>:otbr-rest>
-    openthread-posix
-    openthread-cli-ftd
-    openthread-ftd
-    openthread-spinel-rcp
-    openthread-hdlc
     otbr-sdp-proxy
     otbr-ncp
     otbr-common
     otbr-utils
+    openthread-cli-ftd
+    openthread-posix
+    openthread-ftd
+    openthread-hdlc
+    openthread-spinel-rcp
+    openthread-posix
+    openthread-cli-ftd
 )
 
 add_dependencies(otbr-agent ot-ctl print-ot-config otbr-sdp-proxy otbr-utils otbr-ncp)
@@ -103,6 +105,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/otbr-agent.default
 
 pkg_check_modules(LIBSYSTEMD libsystemd)
 if(LIBSYSTEMD_FOUND)
-    target_compile_definitions(otbr-config INTERFACE "HAVE_LIBSYSTEMD=1")
+    target_compile_definitions(ot-posix-config INTERFACE "HAVE_LIBSYSTEMD=1")
     target_link_libraries(otbr-agent PUBLIC ${LIBSYSTEMD_LIBRARIES})
 endif()

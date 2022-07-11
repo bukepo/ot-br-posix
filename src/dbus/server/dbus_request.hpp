@@ -35,7 +35,7 @@
 #define OTBR_LOG_TAG "DBUS"
 #endif
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 #include "dbus/common/dbus_message_dump.hpp"

@@ -101,7 +101,7 @@ static int swapOpen(otInstance *aInstance)
     getSettingsFileName(aInstance, fileName, true);
 
     fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
-    VerifyOrDie(fd != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(fd != -1, OT_EXIT_ERROR_ERRNO);
 
     return fd;
 }
@@ -125,11 +125,11 @@ static void swapWrite(otInstance *aInstance, int aFd, uint16_t aLength)
         uint16_t count = aLength >= sizeof(buffer) ? sizeof(buffer) : aLength;
         ssize_t  rval  = read(sSettingsFd, buffer, count);
 
-        VerifyOrDie(rval > 0, OT_EXIT_FAILURE);
+        otVerifyOrDie(rval > 0, OT_EXIT_FAILURE);
         count = static_cast<uint16_t>(rval);
         rval  = write(aFd, buffer, count);
         assert(rval == count);
-        VerifyOrDie(rval == count, OT_EXIT_FAILURE);
+        otVerifyOrDie(rval == count, OT_EXIT_FAILURE);
         aLength -= count;
     }
 }
@@ -142,9 +142,9 @@ static void swapPersist(otInstance *aInstance, int aFd)
     getSettingsFileName(aInstance, swapFile, true);
     getSettingsFileName(aInstance, dataFile, false);
 
-    VerifyOrDie(0 == close(sSettingsFd), OT_EXIT_ERROR_ERRNO);
-    VerifyOrDie(0 == fsync(aFd), OT_EXIT_ERROR_ERRNO);
-    VerifyOrDie(0 == rename(swapFile, dataFile), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == close(sSettingsFd), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == fsync(aFd), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == rename(swapFile, dataFile), OT_EXIT_ERROR_ERRNO);
 
     sSettingsFd = aFd;
 }
@@ -153,9 +153,9 @@ static void swapDiscard(otInstance *aInstance, int aFd)
 {
     char swapFileName[kMaxFileNameSize];
 
-    VerifyOrDie(0 == close(aFd), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == close(aFd), OT_EXIT_ERROR_ERRNO);
     getSettingsFileName(aInstance, swapFileName, true);
-    VerifyOrDie(0 == unlink(swapFileName), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == unlink(swapFileName), OT_EXIT_ERROR_ERRNO);
 }
 
 void otPlatSettingsInit(otInstance *aInstance, const uint16_t *aSensitiveKeys, uint16_t aSensitiveKeysLength)
@@ -180,7 +180,7 @@ void otPlatSettingsInit(otInstance *aInstance, const uint16_t *aSensitiveKeys, u
 
         if (stat(OPENTHREAD_CONFIG_POSIX_SETTINGS_PATH, &st) == -1)
         {
-            VerifyOrDie(mkdir(OPENTHREAD_CONFIG_POSIX_SETTINGS_PATH, 0755) == 0, OT_EXIT_ERROR_ERRNO);
+            otVerifyOrDie(mkdir(OPENTHREAD_CONFIG_POSIX_SETTINGS_PATH, 0755) == 0, OT_EXIT_ERROR_ERRNO);
         }
     }
 
@@ -191,7 +191,7 @@ void otPlatSettingsInit(otInstance *aInstance, const uint16_t *aSensitiveKeys, u
         sSettingsFd = open(fileName, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
     }
 
-    VerifyOrDie(sSettingsFd != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sSettingsFd != -1, OT_EXIT_ERROR_ERRNO);
 
     for (off_t size = lseek(sSettingsFd, 0, SEEK_END), offset = lseek(sSettingsFd, 0, SEEK_SET); offset < size;)
     {
@@ -216,7 +216,7 @@ void otPlatSettingsInit(otInstance *aInstance, const uint16_t *aSensitiveKeys, u
 exit:
     if (error == OT_ERROR_PARSE)
     {
-        VerifyOrDie(ftruncate(sSettingsFd, 0) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(ftruncate(sSettingsFd, 0) == 0, OT_EXIT_ERROR_ERRNO);
     }
 }
 
@@ -231,7 +231,7 @@ void otPlatSettingsDeinit(otInstance *aInstance)
 #endif
 
     VerifyOrExit(sSettingsFd != -1);
-    VerifyOrDie(close(sSettingsFd) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(close(sSettingsFd) == 0, OT_EXIT_ERROR_ERRNO);
 
 exit:
     return;
@@ -256,7 +256,7 @@ otError otPlatSettingsGet(otInstance *aInstance, uint16_t aKey, int aIndex, uint
     }
 
 exit:
-    VerifyOrDie(error != OT_ERROR_PARSE, OT_EXIT_FAILURE);
+    otVerifyOrDie(error != OT_ERROR_PARSE, OT_EXIT_FAILURE);
     return error;
 }
 
@@ -323,7 +323,7 @@ void otPlatSettingsWipe(otInstance *aInstance)
     otPosixSecureSettingsWipe(aInstance);
 #endif
 
-    VerifyOrDie(0 == ftruncate(sSettingsFd, 0), OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(0 == ftruncate(sSettingsFd, 0), OT_EXIT_ERROR_ERRNO);
 }
 
 namespace ot {
@@ -400,10 +400,10 @@ void PlatformSettingsSet(otInstance *aInstance, uint16_t aKey, const uint8_t *aV
         break;
     }
 
-    VerifyOrDie(write(swapFd, &aKey, sizeof(aKey)) == sizeof(aKey) &&
-                    write(swapFd, &aValueLength, sizeof(aValueLength)) == sizeof(aValueLength) &&
-                    write(swapFd, aValue, aValueLength) == aValueLength,
-                OT_EXIT_FAILURE);
+    otVerifyOrDie(write(swapFd, &aKey, sizeof(aKey)) == sizeof(aKey) &&
+                      write(swapFd, &aValueLength, sizeof(aValueLength)) == sizeof(aValueLength) &&
+                      write(swapFd, aValue, aValueLength) == aValueLength,
+                  OT_EXIT_FAILURE);
 
     swapPersist(aInstance, swapFd);
 }
@@ -415,14 +415,14 @@ void PlatformSettingsAdd(otInstance *aInstance, uint16_t aKey, const uint8_t *aV
 
     if (size > 0)
     {
-        VerifyOrDie(0 == lseek(sSettingsFd, 0, SEEK_SET), OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(0 == lseek(sSettingsFd, 0, SEEK_SET), OT_EXIT_ERROR_ERRNO);
         swapWrite(aInstance, swapFd, static_cast<uint16_t>(size));
     }
 
-    VerifyOrDie(write(swapFd, &aKey, sizeof(aKey)) == sizeof(aKey) &&
-                    write(swapFd, &aValueLength, sizeof(aValueLength)) == sizeof(aValueLength) &&
-                    write(swapFd, aValue, aValueLength) == aValueLength,
-                OT_EXIT_FAILURE);
+    otVerifyOrDie(write(swapFd, &aKey, sizeof(aKey)) == sizeof(aKey) &&
+                      write(swapFd, &aValueLength, sizeof(aValueLength)) == sizeof(aValueLength) &&
+                      write(swapFd, aValue, aValueLength) == aValueLength,
+                  OT_EXIT_FAILURE);
 
     swapPersist(aInstance, swapFd);
 }
@@ -475,17 +475,17 @@ otError PlatformSettingsDelete(otInstance *aInstance, uint16_t aKey, int aIndex,
 
         rval = write(swapFd, &key, sizeof(key));
         assert(rval == sizeof(key));
-        VerifyOrDie(rval == sizeof(key), OT_EXIT_FAILURE);
+        otVerifyOrDie(rval == sizeof(key), OT_EXIT_FAILURE);
 
         rval = write(swapFd, &length, sizeof(length));
         assert(rval == sizeof(length));
-        VerifyOrDie(rval == sizeof(length), OT_EXIT_FAILURE);
+        otVerifyOrDie(rval == sizeof(length), OT_EXIT_FAILURE);
 
         swapWrite(aInstance, swapFd, length);
     }
 
 exit:
-    VerifyOrDie(error != OT_ERROR_PARSE, OT_EXIT_FAILURE);
+    otVerifyOrDie(error != OT_ERROR_PARSE, OT_EXIT_FAILURE);
 
     if (aSwapFd != nullptr)
     {
@@ -525,7 +525,10 @@ void PlatformSettingsGetSensitiveKeys(otInstance *aInstance, const uint16_t **aK
 
 #if SELF_TEST
 
-void otLogCritPlat(const char *aFormat, ...) { OT_UNUSED_VARIABLE(aFormat); }
+void otLogCritPlat(const char *aFormat, ...)
+{
+    OT_UNUSED_VARIABLE(aFormat);
+}
 
 const char *otExitCodeToString(uint8_t aExitCode)
 {
@@ -541,7 +544,10 @@ void otPlatRadioGetIeeeEui64(otInstance *aInstance, uint8_t *aIeeeEui64)
 }
 
 // Stub implementation for testing
-bool IsSystemDryRun(void) { return false; }
+bool IsSystemDryRun(void)
+{
+    return false;
+}
 
 int main()
 {

@@ -155,9 +155,15 @@ unsigned int gNetifIndex = 0;
 char         gNetifName[IFNAMSIZ];
 otIp4Cidr    gNat64Cidr;
 
-const char *otSysGetThreadNetifName(void) { return gNetifName; }
+const char *otSysGetThreadNetifName(void)
+{
+    return gNetifName;
+}
 
-unsigned int otSysGetThreadNetifIndex(void) { return gNetifIndex; }
+unsigned int otSysGetThreadNetifIndex(void)
+{
+    return gNetifIndex;
+}
 
 #if OPENTHREAD_CONFIG_PLATFORM_NETIF_ENABLE
 #if OPENTHREAD_POSIX_CONFIG_FIREWALL_ENABLE
@@ -524,7 +530,7 @@ static void UpdateMulticast(otInstance *aInstance, const otIp6Address &aAddress,
                   Ip6AddressString(&aAddress).AsCString());
 
 exit:
-    SuccessOrDie(error);
+    otSuccessOrDie(error);
 }
 
 static void SetLinkState(otInstance *aInstance, bool aState)
@@ -612,7 +618,7 @@ template <size_t N> otError AddRoute(const uint8_t (&aAddress)[N], uint8_t aPref
     if (send(sNetlinkFd, &req, sizeof(req), 0) < 0)
     {
         VerifyOrExit(errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK, error = OT_ERROR_BUSY);
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 exit:
     return error;
@@ -658,7 +664,7 @@ template <size_t N> otError DeleteRoute(const uint8_t (&aAddress)[N], uint8_t aP
     if (send(sNetlinkFd, &req, sizeof(req), 0) < 0)
     {
         VerifyOrExit(errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK, error = OT_ERROR_BUSY);
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 
 exit:
@@ -1544,11 +1550,12 @@ static void mldListenerInit(void)
     mreq6.ipv6mr_interface = gNetifIndex;
     memcpy(&mreq6.ipv6mr_multiaddr, kMLDv2MulticastAddress.mFields.m8, sizeof(kMLDv2MulticastAddress.mFields.m8));
 
-    VerifyOrDie(setsockopt(sMLDMonitorFd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6, sizeof(mreq6)) == 0, OT_EXIT_FAILURE);
+    otVerifyOrDie(setsockopt(sMLDMonitorFd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6, sizeof(mreq6)) == 0,
+                  OT_EXIT_FAILURE);
 #if defined(__linux__)
-    VerifyOrDie(setsockopt(sMLDMonitorFd, SOL_SOCKET, SO_BINDTODEVICE, gNetifName,
-                           static_cast<socklen_t>(strnlen(gNetifName, IFNAMSIZ))) == 0,
-                OT_EXIT_FAILURE);
+    otVerifyOrDie(setsockopt(sMLDMonitorFd, SOL_SOCKET, SO_BINDTODEVICE, gNetifName,
+                             static_cast<socklen_t>(strnlen(gNetifName, IFNAMSIZ))) == 0,
+                  OT_EXIT_FAILURE);
 #endif
 }
 
@@ -1638,7 +1645,7 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
     const char  *interfaceName;
 
     sTunFd = open(OPENTHREAD_POSIX_TUN_DEVICE, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-    VerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
 
     memset(&ifr, 0, sizeof(ifr));
     ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
@@ -1650,7 +1657,7 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
     interfaceName = aPlatformConfig->mInterfaceName;
     if (interfaceName)
     {
-        VerifyOrDie(strlen(interfaceName) < IFNAMSIZ, OT_EXIT_INVALID_ARGUMENTS);
+        otVerifyOrDie(strlen(interfaceName) < IFNAMSIZ, OT_EXIT_INVALID_ARGUMENTS);
 
         strncpy(ifr.ifr_name, interfaceName, IFNAMSIZ);
     }
@@ -1659,22 +1666,22 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
         strncpy(ifr.ifr_name, "wpan%d", IFNAMSIZ);
     }
 
-    VerifyOrDie(ioctl(sTunFd, TUNSETIFF, static_cast<void *>(&ifr)) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(sTunFd, TUNSETIFF, static_cast<void *>(&ifr)) == 0, OT_EXIT_ERROR_ERRNO);
 
     strncpy(gNetifName, ifr.ifr_name, sizeof(gNetifName));
 
     if (aPlatformConfig->mPersistentInterface)
     {
-        VerifyOrDie(ioctl(sTunFd, TUNSETPERSIST, 1) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(ioctl(sTunFd, TUNSETPERSIST, 1) == 0, OT_EXIT_ERROR_ERRNO);
         // Set link down to reset the tun configuration.
         // This will drop all existing IP addresses on the interface.
         SetLinkState(gInstance, false);
     }
 
-    VerifyOrDie(ioctl(sTunFd, TUNSETLINK, ARPHRD_VOID) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(sTunFd, TUNSETLINK, ARPHRD_VOID) == 0, OT_EXIT_ERROR_ERRNO);
 
     ifr.ifr_mtu = static_cast<int>(kMaxIp6Size);
-    VerifyOrDie(ioctl(sIpFd, SIOCSIFMTU, static_cast<void *>(&ifr)) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(sIpFd, SIOCSIFMTU, static_cast<void *>(&ifr)) == 0, OT_EXIT_ERROR_ERRNO);
 }
 #endif
 
@@ -1687,12 +1694,12 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
     struct ctl_info     info;
 
     sTunFd = SocketWithCloseExec(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL, kSocketNonBlock);
-    VerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
 
     memset(&info, 0, sizeof(info));
     strncpy(info.ctl_name, UTUN_CONTROL_NAME, strlen(UTUN_CONTROL_NAME));
     err = ioctl(sTunFd, CTLIOCGINFO, &info);
-    VerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
 
     addr.sc_id      = info.ctl_id;
     addr.sc_len     = sizeof(addr);
@@ -1701,12 +1708,12 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
 
     addr.sc_unit = 0;
     err          = connect(sTunFd, (struct sockaddr *)&addr, sizeof(addr));
-    VerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
 
     socklen_t devNameLen;
     devNameLen = (socklen_t)sizeof(gNetifName);
     err        = getsockopt(sTunFd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, gNetifName, &devNameLen);
-    VerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
 
     otLogInfoPlat("[netif] Tunnel device name = '%s'", gNetifName);
 }
@@ -1743,19 +1750,19 @@ static void platformConfigureTunDevice(otPlatformConfig *aPlatformConfig)
     path = OPENTHREAD_POSIX_TUN_DEVICE;
 
     sTunFd = open(path, O_RDWR | O_NONBLOCK);
-    VerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sTunFd >= 0, OT_EXIT_ERROR_ERRNO);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
     err = ioctl(sTunFd, TUNSIFMODE, &flags);
-    VerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
 #endif
 
     flags = 1;
     err   = ioctl(sTunFd, TUNSIFHEAD, &flags);
-    VerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(err == 0, OT_EXIT_ERROR_ERRNO);
 
     last_slash = strrchr(OPENTHREAD_POSIX_TUN_DEVICE, '/');
-    VerifyOrDie(last_slash != nullptr, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(last_slash != nullptr, OT_EXIT_ERROR_ERRNO);
     last_slash++;
 
     strncpy(gNetifName, last_slash, sizeof(gNetifName));
@@ -1771,7 +1778,7 @@ static void platformConfigureNetLink(void)
 #else
 #error "!! Unknown platform !!"
 #endif
-    VerifyOrDie(sNetlinkFd >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sNetlinkFd >= 0, OT_EXIT_ERROR_ERRNO);
 
 #if defined(__linux__)
     {
@@ -1780,7 +1787,7 @@ static void platformConfigureNetLink(void)
         memset(&sa, 0, sizeof(sa));
         sa.nl_family = AF_NETLINK;
         sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV6_IFADDR;
-        VerifyOrDie(bind(sNetlinkFd, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa)) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(bind(sNetlinkFd, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa)) == 0, OT_EXIT_ERROR_ERRNO);
     }
 #endif
 
@@ -1802,10 +1809,10 @@ static void platformConfigureNetLink(void)
 #endif
 #if defined(ROUTE_FILTER) || defined(RO_MSGFILTER)
         status = setsockopt(sNetlinkFd, AF_ROUTE, FILTER_CMD, FILTER_ARG, FILTER_ARG_SZ);
-        VerifyOrDie(status == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(status == 0, OT_EXIT_ERROR_ERRNO);
 #endif
         status = fcntl(sNetlinkFd, F_SETFL, O_NONBLOCK);
-        VerifyOrDie(status == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(status == 0, OT_EXIT_ERROR_ERRNO);
     }
 #endif // defined(__APPLE__) || defined(__NetBSD__) || defined(__FreeBSD__)
 }
@@ -1813,13 +1820,13 @@ static void platformConfigureNetLink(void)
 void platformNetifInit(otPlatformConfig *aPlatformConfig)
 {
     sIpFd = SocketWithCloseExec(AF_INET6, SOCK_DGRAM, IPPROTO_IP, kSocketNonBlock);
-    VerifyOrDie(sIpFd >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sIpFd >= 0, OT_EXIT_ERROR_ERRNO);
 
     platformConfigureNetLink();
     platformConfigureTunDevice(aPlatformConfig);
 
     gNetifIndex = if_nametoindex(gNetifName);
-    VerifyOrDie(gNetifIndex > 0, OT_EXIT_FAILURE);
+    otVerifyOrDie(gNetifIndex > 0, OT_EXIT_FAILURE);
 
 #if OPENTHREAD_POSIX_USE_MLD_MONITOR
     mldListenerInit();
@@ -1847,7 +1854,9 @@ void platformNetifSetUp(void)
 #endif
 }
 
-void platformNetifTearDown(void) {}
+void platformNetifTearDown(void)
+{
+}
 
 void platformNetifDeinit(void)
 {
@@ -1931,20 +1940,20 @@ void platformNetifProcess(const fd_set *aReadFdSet, const fd_set *aWriteFdSet, c
     if (FD_ISSET(sTunFd, aErrorFdSet))
     {
         close(sTunFd);
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 
     if (FD_ISSET(sNetlinkFd, aErrorFdSet))
     {
         close(sNetlinkFd);
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 
 #if OPENTHREAD_POSIX_USE_MLD_MONITOR
     if (FD_ISSET(sMLDMonitorFd, aErrorFdSet))
     {
         close(sMLDMonitorFd);
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 #endif
 

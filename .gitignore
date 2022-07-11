@@ -48,8 +48,8 @@ doc/html
 
 
 # Configure results for border router
-include/otbr-config.h
-include/otbr-config.h.in
+include/ot-posix-config.h
+include/ot-posix-config.h.in
 
 
 # VIM swap files

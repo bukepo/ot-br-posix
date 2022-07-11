@@ -43,7 +43,7 @@
 #include <stdint.h>
 
 #include "backbone_router/backbone_agent.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/mainloop.hpp"
 #include "mdns/mdns.hpp"
 #include "ncp/ncp_openthread.hpp"

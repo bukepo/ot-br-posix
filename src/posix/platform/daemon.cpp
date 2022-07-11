@@ -65,7 +65,7 @@ void GetFilename(Filename &aFilename, const char *aPattern)
     rval = snprintf(aFilename, sizeof(aFilename), aPattern, gNetifName);
     if (rval < 0 && static_cast<size_t>(rval) >= sizeof(aFilename))
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
 }
 
@@ -187,7 +187,7 @@ void Daemon::SetUp(void)
 
     if (mListenSocket == -1)
     {
-        DieNow(OT_EXIT_FAILURE);
+        otDieNow(OT_EXIT_FAILURE);
     }
 
     {
@@ -202,12 +202,12 @@ void Daemon::SetUp(void)
 
     if (mDaemonLock == -1)
     {
-        DieNowWithMessage("open", OT_EXIT_ERROR_ERRNO);
+        otDieNowWithMessage("open", OT_EXIT_ERROR_ERRNO);
     }
 
     if (flock(mDaemonLock, LOCK_EX | LOCK_NB) == -1)
     {
-        DieNowWithMessage("flock", OT_EXIT_ERROR_ERRNO);
+        otDieNowWithMessage("flock", OT_EXIT_ERROR_ERRNO);
     }
 
     memset(&sockname, 0, sizeof(struct sockaddr_un));
@@ -224,7 +224,7 @@ void Daemon::SetUp(void)
 
     if (ret == -1)
     {
-        DieNowWithMessage("bind", OT_EXIT_ERROR_ERRNO);
+        otDieNowWithMessage("bind", OT_EXIT_ERROR_ERRNO);
     }
 
     //
@@ -233,7 +233,7 @@ void Daemon::SetUp(void)
     ret = listen(mListenSocket, 1);
     if (ret == -1)
     {
-        DieNowWithMessage("listen", OT_EXIT_ERROR_ERRNO);
+        otDieNowWithMessage("listen", OT_EXIT_ERROR_ERRNO);
     }
 
     otCliInit(
@@ -317,7 +317,7 @@ void Daemon::Process(const otSysMainloopContext &aContext)
 
     if (FD_ISSET(mListenSocket, &aContext.mErrorFdSet))
     {
-        DieNowWithMessage("daemon socket error", OT_EXIT_FAILURE);
+        otDieNowWithMessage("daemon socket error", OT_EXIT_FAILURE);
     }
     else if (FD_ISSET(mListenSocket, &aContext.mReadFdSet))
     {

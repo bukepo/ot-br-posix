@@ -58,9 +58,14 @@ int OutputCallback(void *aContext, const char *aFormat, va_list aArguments)
 }
 } // namespace
 
-extern "C" void otAppCliInit(otInstance *aInstance) { otCliInit(aInstance, OutputCallback, nullptr); }
+extern "C" void otAppCliInit(otInstance *aInstance)
+{
+    otCliInit(aInstance, OutputCallback, nullptr);
+}
 
-extern "C" void otAppCliDeinit(void) {}
+extern "C" void otAppCliDeinit(void)
+{
+}
 
 extern "C" void otAppCliUpdate(otSysMainloopContext *aMainloop)
 {

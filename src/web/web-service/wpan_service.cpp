@@ -42,7 +42,7 @@
 #include <unistd.h>
 
 #include "common/byteswap.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 namespace Web {

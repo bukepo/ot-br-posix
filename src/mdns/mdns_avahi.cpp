@@ -49,9 +49,9 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
-#include "common/time.hpp"
+#include "common/time_utils.hpp"
 
 struct AvahiWatch
 {

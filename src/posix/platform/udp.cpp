@@ -65,13 +65,25 @@ namespace {
 
 constexpr size_t kMaxUdpSize = 1280;
 
-void *FdToHandle(int aFd) { return reinterpret_cast<void *>(aFd); }
+void *FdToHandle(int aFd)
+{
+    return reinterpret_cast<void *>(aFd);
+}
 
-int FdFromHandle(void *aHandle) { return static_cast<int>(reinterpret_cast<long>(aHandle)); }
+int FdFromHandle(void *aHandle)
+{
+    return static_cast<int>(reinterpret_cast<long>(aHandle));
+}
 
-bool IsLinkLocal(const struct in6_addr &aAddress) { return aAddress.s6_addr[0] == 0xfe && aAddress.s6_addr[1] == 0x80; }
+bool IsLinkLocal(const struct in6_addr &aAddress)
+{
+    return aAddress.s6_addr[0] == 0xfe && aAddress.s6_addr[1] == 0x80;
+}
 
-bool IsMulticast(const otIp6Address &aAddress) { return aAddress.mFields.m8[0] == 0xff; }
+bool IsMulticast(const otIp6Address &aAddress)
+{
+    return aAddress.mFields.m8[0] == 0xff;
+}
 
 otError transmitPacket(int aFd, uint8_t *aPayload, uint16_t aLength, const otMessageInfo &aMessageInfo)
 {
@@ -430,7 +442,8 @@ otError otPlatUdpSend(otUdpSocket *aUdpSocket, otMessage *aMessage, const otMess
     {
         int value = 1;
 
-        VerifyOrDie(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &value, sizeof(value)) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &value, sizeof(value)) == 0,
+                      OT_EXIT_ERROR_ERRNO);
     }
 
     error = transmitPacket(fd, payload, len, *aMessageInfo);
@@ -439,7 +452,8 @@ otError otPlatUdpSend(otUdpSocket *aUdpSocket, otMessage *aMessage, const otMess
     {
         int value = 0;
 
-        VerifyOrDie(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &value, sizeof(value)) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &value, sizeof(value)) == 0,
+                      OT_EXIT_ERROR_ERRNO);
     }
 
 exit:
@@ -564,24 +578,30 @@ void Udp::Init(const char *aIfName)
 {
     if (aIfName == nullptr)
     {
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
 
     if (aIfName != gNetifName)
     {
-        VerifyOrDie(strlen(aIfName) < sizeof(gNetifName) - 1, OT_EXIT_INVALID_ARGUMENTS);
+        otVerifyOrDie(strlen(aIfName) < sizeof(gNetifName) - 1, OT_EXIT_INVALID_ARGUMENTS);
         assert(gNetifIndex == 0);
         strcpy(gNetifName, aIfName);
         gNetifIndex = if_nametoindex(gNetifName);
-        VerifyOrDie(gNetifIndex != 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(gNetifIndex != 0, OT_EXIT_ERROR_ERRNO);
     }
 
     assert(gNetifIndex != 0);
 }
 
-void Udp::SetUp(void) { Mainloop::Manager::Get().Add(*this); }
+void Udp::SetUp(void)
+{
+    Mainloop::Manager::Get().Add(*this);
+}
 
-void Udp::TearDown(void) { Mainloop::Manager::Get().Remove(*this); }
+void Udp::TearDown(void)
+{
+    Mainloop::Manager::Get().Remove(*this);
+}
 
 void Udp::Deinit(void)
 {

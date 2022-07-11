@@ -41,7 +41,7 @@
 #include <openthread/instance.h>
 #include <openthread/srp_server.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "mdns/mdns.hpp"
 #include "ncp/ncp_openthread.hpp"
 

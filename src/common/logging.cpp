@@ -46,8 +46,8 @@
 
 #include <sstream>
 
-#include "common/code_utils.hpp"
-#include "common/time.hpp"
+#include "common/code_helpers.hpp"
+#include "common/time_utils.hpp"
 
 static otbrLogLevel sLevel            = OTBR_LOG_INFO;
 static const char   sLevelString[][8] = {

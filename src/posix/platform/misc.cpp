@@ -115,7 +115,7 @@ int SocketWithCloseExec(int aDomain, int aType, int aProtocol, SocketBlockOption
 exit:
     if (rval == -1)
     {
-        VerifyOrDie(close(fd) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(close(fd) == 0, OT_EXIT_ERROR_ERRNO);
         fd = -1;
     }
 

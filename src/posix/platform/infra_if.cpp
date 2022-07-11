@@ -67,7 +67,7 @@ bool otPlatInfraIfHasAddress(uint32_t aInfraIfIndex, const otIp6Address *aAddres
     bool            ret     = false;
     struct ifaddrs *ifAddrs = nullptr;
 
-    VerifyOrDie(getifaddrs(&ifAddrs) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(getifaddrs(&ifAddrs) != -1, OT_EXIT_ERROR_ERRNO);
 
     for (struct ifaddrs *addr = ifAddrs; addr != nullptr; addr = addr->ifa_next)
     {
@@ -109,11 +109,20 @@ otError otPlatInfraIfDiscoverNat64Prefix(uint32_t aInfraIfIndex)
 #endif
 }
 
-bool platformInfraIfIsRunning(void) { return ot::Posix::InfraNetif::Get().IsRunning(); }
+bool platformInfraIfIsRunning(void)
+{
+    return ot::Posix::InfraNetif::Get().IsRunning();
+}
 
-const char *otSysGetInfraNetifName(void) { return ot::Posix::InfraNetif::Get().GetNetifName(); }
+const char *otSysGetInfraNetifName(void)
+{
+    return ot::Posix::InfraNetif::Get().GetNetifName();
+}
 
-uint32_t otSysGetInfraNetifFlags(void) { return ot::Posix::InfraNetif::Get().GetFlags(); }
+uint32_t otSysGetInfraNetifFlags(void)
+{
+    return ot::Posix::InfraNetif::Get().GetFlags();
+}
 
 void otSysCountInfraNetifAddresses(otSysInfraNetIfAddressCounters *aAddressCounters)
 {
@@ -135,7 +144,7 @@ int CreateIcmp6Socket(void)
 
     // Initializes the ICMPv6 socket.
     sock = SocketWithCloseExec(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6, kSocketBlock);
-    VerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
 
     // Only accept Router Advertisements, Router Solicitations and Neighbor Advertisements.
     ICMP6_FILTER_SETBLOCKALL(&filter);
@@ -144,28 +153,28 @@ int CreateIcmp6Socket(void)
     ICMP6_FILTER_SETPASS(ND_NEIGHBOR_ADVERT, &filter);
 
     rval = setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter, sizeof(filter));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     // We want a source address and interface index.
     rval = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &kEnable, sizeof(kEnable));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
 #ifdef __linux__
     rval = setsockopt(sock, IPPROTO_RAW, IPV6_CHECKSUM, &kIpv6ChecksumOffset, sizeof(kIpv6ChecksumOffset));
 #else
     rval = setsockopt(sock, IPPROTO_IPV6, IPV6_CHECKSUM, &kIpv6ChecksumOffset, sizeof(kIpv6ChecksumOffset));
 #endif
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     // We need to be able to reject RAs arriving from off-link.
     rval = setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &kEnable, sizeof(kEnable));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     rval = setsockopt(sock, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &kHopLimit, sizeof(kHopLimit));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     rval = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &kHopLimit, sizeof(kHopLimit));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     return sock;
 }
@@ -175,9 +184,15 @@ bool IsAddressLinkLocal(const in6_addr &aAddress)
     return ((aAddress.s6_addr[0] & 0xff) == 0xfe) && ((aAddress.s6_addr[1] & 0xc0) == 0x80);
 }
 
-bool IsAddressUniqueLocal(const in6_addr &aAddress) { return (aAddress.s6_addr[0] & 0xfe) == 0xfc; }
+bool IsAddressUniqueLocal(const in6_addr &aAddress)
+{
+    return (aAddress.s6_addr[0] & 0xfe) == 0xfc;
+}
 
-bool IsAddressGlobalUnicast(const in6_addr &aAddress) { return (aAddress.s6_addr[0] & 0xe0) == 0x20; }
+bool IsAddressGlobalUnicast(const in6_addr &aAddress)
+{
+    return (aAddress.s6_addr[0] & 0xe0) == 0x20;
+}
 
 // Create a net-link socket that subscribes to link & addresses events.
 int CreateNetLinkSocket(void)
@@ -187,14 +202,14 @@ int CreateNetLinkSocket(void)
     struct sockaddr_nl addr;
 
     sock = SocketWithCloseExec(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE, kSocketBlock);
-    VerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
 
     memset(&addr, 0, sizeof(addr));
     addr.nl_family = AF_NETLINK;
     addr.nl_groups = RTMGRP_LINK | RTMGRP_IPV6_IFADDR;
 
     rval = bind(sock, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr));
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     return sock;
 }
@@ -275,7 +290,10 @@ exit:
     return error;
 }
 
-bool InfraNetif::IsRunning(void) const { return (GetFlags() & IFF_RUNNING) && HasLinkLocalAddress(); }
+bool InfraNetif::IsRunning(void) const
+{
+    return (GetFlags() & IFF_RUNNING) && HasLinkLocalAddress();
+}
 
 uint32_t InfraNetif::GetFlags(void) const
 {
@@ -285,13 +303,13 @@ uint32_t InfraNetif::GetFlags(void) const
     OT_ASSERT(mInfraIfIndex != 0);
 
     sock = SocketWithCloseExec(AF_INET6, SOCK_DGRAM, IPPROTO_IP, kSocketBlock);
-    VerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sock != -1, OT_EXIT_ERROR_ERRNO);
 
     memset(&ifReq, 0, sizeof(ifReq));
     static_assert(sizeof(ifReq.ifr_name) >= sizeof(mInfraIfName), "mInfraIfName is not of appropriate size.");
     strcpy(ifReq.ifr_name, mInfraIfName);
 
-    VerifyOrDie(ioctl(sock, SIOCGIFFLAGS, &ifReq) != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ioctl(sock, SIOCGIFFLAGS, &ifReq) != -1, OT_EXIT_ERROR_ERRNO);
 
     close(sock);
 
@@ -341,7 +359,7 @@ bool InfraNetif::HasLinkLocalAddress(void) const
     if (getifaddrs(&ifAddrs) < 0)
     {
         otLogCritPlat("failed to get netif addresses: %s", strerror(errno));
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 
     for (struct ifaddrs *addr = ifAddrs; addr != nullptr; addr = addr->ifa_next)
@@ -376,7 +394,7 @@ void InfraNetif::Init(const char *aIfName)
         ExitNow();
     }
 
-    VerifyOrDie(strnlen(aIfName, sizeof(mInfraIfName)) <= sizeof(mInfraIfName) - 1, OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie(strnlen(aIfName, sizeof(mInfraIfName)) <= sizeof(mInfraIfName) - 1, OT_EXIT_INVALID_ARGUMENTS);
     strcpy(mInfraIfName, aIfName);
 
     // Initializes the infra interface.
@@ -384,7 +402,7 @@ void InfraNetif::Init(const char *aIfName)
     if (ifIndex == 0)
     {
         otLogCritPlat("Failed to get the index for infra interface %s", aIfName);
-        DieNow(OT_EXIT_INVALID_ARGUMENTS);
+        otDieNow(OT_EXIT_INVALID_ARGUMENTS);
     }
     mInfraIfIndex = ifIndex;
 
@@ -394,7 +412,7 @@ void InfraNetif::Init(const char *aIfName)
 #else  // __NetBSD__ || __FreeBSD__ || __APPLE__
     rval = setsockopt(mInfraIfIcmp6Socket, IPPROTO_IPV6, IPV6_BOUND_IF, &mInfraIfIndex, sizeof(mInfraIfIndex));
 #endif // __linux__
-    VerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(rval == 0, OT_EXIT_ERROR_ERRNO);
 
     mNetLinkSocket = CreateNetLinkSocket();
 

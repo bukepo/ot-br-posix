@@ -30,7 +30,7 @@
 
 #include <assert.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 static bool NameEndsWithDot(const std::string &aName)
 {

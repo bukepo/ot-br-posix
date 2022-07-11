@@ -124,13 +124,13 @@ static void PrepareSocket(uint16_t &aUdpPort)
     otLogDebgPlat("[trel] PrepareSocket()");
 
     sSocket = SocketWithCloseExec(AF_INET6, SOCK_DGRAM, 0, kSocketNonBlock);
-    VerifyOrDie(sSocket >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(sSocket >= 0, OT_EXIT_ERROR_ERRNO);
 
     // Make the socket non-blocking to allow immediate tx attempt.
     val = fcntl(sSocket, F_GETFL, 0);
-    VerifyOrDie(val != -1, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(val != -1, OT_EXIT_ERROR_ERRNO);
     val = val | O_NONBLOCK;
-    VerifyOrDie(fcntl(sSocket, F_SETFL, val) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(fcntl(sSocket, F_SETFL, val) == 0, OT_EXIT_ERROR_ERRNO);
 
     // Bind the socket.
 
@@ -142,7 +142,7 @@ static void PrepareSocket(uint16_t &aUdpPort)
     if (bind(sSocket, (struct sockaddr *)&sockAddr, sizeof(sockAddr)) == -1)
     {
         otLogCritPlat("[trel] Failed to bind socket");
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 
     sockLen = sizeof(sockAddr);
@@ -150,7 +150,7 @@ static void PrepareSocket(uint16_t &aUdpPort)
     if (getsockname(sSocket, (struct sockaddr *)&sockAddr, &sockLen) == -1)
     {
         otLogCritPlat("[trel] Failed to get the socket name");
-        DieNow(OT_EXIT_ERROR_ERRNO);
+        otDieNow(OT_EXIT_ERROR_ERRNO);
     }
 
     aUdpPort = ntohs(sockAddr.sin6_port);
@@ -205,7 +205,7 @@ static void ReceivePacket(int aSocket, otInstance *aInstance)
 
     ret = recvfrom(aSocket, (char *)sRxPacketBuffer, sizeof(sRxPacketBuffer), 0, (struct sockaddr *)&sockAddr,
                    &sockAddrLen);
-    VerifyOrDie(ret >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(ret >= 0, OT_EXIT_ERROR_ERRNO);
 
     sRxPacketLength = (uint16_t)(ret);
 

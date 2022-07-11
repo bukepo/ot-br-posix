@@ -45,7 +45,7 @@
 #include <openthread/platform/radio.h>
 
 #include "common/byteswap.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/tlv.hpp"
 #include "ncp/ncp_openthread.hpp"

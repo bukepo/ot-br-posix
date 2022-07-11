@@ -40,7 +40,7 @@
 
 #include "backbone_router/dua_routing_manager.hpp"
 #include "backbone_router/nd_proxy.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "ncp/ncp_openthread.hpp"
 
 namespace otbr {

@@ -54,12 +54,12 @@ void platformBackboneInit(const char *aInterfaceName)
         ExitNow();
     }
 
-    VerifyOrDie(strnlen(aInterfaceName, sizeof(gBackboneNetifName)) < sizeof(gBackboneNetifName),
-                OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie(strnlen(aInterfaceName, sizeof(gBackboneNetifName)) < sizeof(gBackboneNetifName),
+                  OT_EXIT_INVALID_ARGUMENTS);
     strcpy(gBackboneNetifName, aInterfaceName);
 
     gBackboneNetifIndex = if_nametoindex(gBackboneNetifName);
-    VerifyOrDie(gBackboneNetifIndex > 0, OT_EXIT_FAILURE);
+    otVerifyOrDie(gBackboneNetifIndex > 0, OT_EXIT_FAILURE);
 
     otLogInfoPlat("Backbone interface is configured to %s (%d)", gBackboneNetifName, gBackboneNetifIndex);
 

@@ -42,7 +42,7 @@
 
 #include <openthread/backbone_router_ftd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 namespace BackboneRouter {

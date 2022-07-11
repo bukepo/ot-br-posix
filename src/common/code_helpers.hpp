@@ -40,8 +40,19 @@
 #include <assert.h>
 #include <memory>
 #include <stdlib.h>
+#include <openthread/error.h>
 
 #include "common/logging.hpp"
+
+/**
+ * This macro calculates the number of elements in an array.
+ *
+ * @param[in] aArray  Name of the array variable.
+ *
+ * @returns Number of elements in the array.
+ *
+ */
+#define OTBR_ARRAY_LENGTH(aArray) (sizeof(aArray) / sizeof(aArray[0]))
 
 /**
  *  This aligns the pointer to @p aAlignType.
@@ -230,5 +241,19 @@ private:
     alignas(T) unsigned char mStorage[sizeof(T)];
     bool mHasValue = false;
 };
+
+/**
+ * This function ignores an error explicitly.
+ *
+ * This is primarily used to indicate the intention of developer that
+ * the error can be safely ignored or there is guaranteed to be no error.
+ *
+ * @param[in]  aError  The error to be ignored.
+ *
+ */
+static inline void otIgnoreError(otError aError)
+{
+    OT_UNUSED_VARIABLE(aError);
+}
 
 #endif // OTBR_COMMON_CODE_UTILS_HPP_

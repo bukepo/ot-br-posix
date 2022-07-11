@@ -45,8 +45,6 @@ target_link_libraries(ot-daemon PRIVATE
     openthread-spinel-rcp
     ${OT_MBEDTLS}
     ot-posix-config
-    ot-config-ftd
-    ot-config
 )
 
 add_executable(ot-ctl
@@ -65,7 +63,6 @@ target_compile_options(ot-ctl PRIVATE
 target_link_libraries(ot-ctl PRIVATE
     ${READLINE_LINK_LIBRARIES}
     ot-posix-config
-    ot-config
 )
 
 target_include_directories(ot-ctl PRIVATE ${COMMON_INCLUDES})

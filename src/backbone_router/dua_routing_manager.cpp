@@ -35,7 +35,7 @@
 
 #if OTBR_ENABLE_DUA_ROUTING
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 

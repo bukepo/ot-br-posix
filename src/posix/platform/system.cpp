@@ -97,7 +97,7 @@ static const char *get802154RadioUrl(otPlatformConfig *aPlatformConfig)
         break;
     }
 
-    VerifyOrDie(radioUrl != nullptr, OT_EXIT_INVALID_ARGUMENTS);
+    otVerifyOrDie(radioUrl != nullptr, OT_EXIT_INVALID_ARGUMENTS);
     return radioUrl;
 }
 
@@ -198,7 +198,7 @@ void platformSetUp(void)
 #endif
 
 #if OPENTHREAD_CONFIG_PLATFORM_NETIF_ENABLE || OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
-    SuccessOrDie(otSetStateChangedCallback(gInstance, processStateChange, gInstance));
+    otSuccessOrDie(otSetStateChangedCallback(gInstance, processStateChange, gInstance));
 #endif
 
 exit:
@@ -410,4 +410,7 @@ void otSysMainloopProcess(otInstance *aInstance, const otSysMainloopContext *aMa
 #endif
 }
 
-bool IsSystemDryRun(void) { return gDryRun; }
+bool IsSystemDryRun(void)
+{
+    return gDryRun;
+}

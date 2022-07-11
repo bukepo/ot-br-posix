@@ -47,7 +47,7 @@ ConfigFile::ConfigFile(const char *aFilePath)
     : mFilePath(aFilePath)
 {
     assert(mFilePath != nullptr);
-    VerifyOrDie(strlen(mFilePath) + strlen(kSwapSuffix) < kFileNameMaxSize, OT_EXIT_FAILURE);
+    otVerifyOrDie(strlen(mFilePath) + strlen(kSwapSuffix) < kFileNameMaxSize, OT_EXIT_FAILURE);
 }
 
 otError ConfigFile::Get(const char *aKey, int &aIterator, char *aValue, int aValueLength)
@@ -60,7 +60,7 @@ otError ConfigFile::Get(const char *aKey, int &aIterator, char *aValue, int aVal
 
     VerifyOrExit((aKey != nullptr) && (aValue != nullptr), error = OT_ERROR_INVALID_ARGS);
     VerifyOrExit((fp = fopen(mFilePath, "r")) != nullptr, error = OT_ERROR_NOT_FOUND);
-    VerifyOrDie(fseek(fp, aIterator, SEEK_SET) == 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(fseek(fp, aIterator, SEEK_SET) == 0, OT_EXIT_ERROR_ERRNO);
 
     while ((ret = fgets(line, sizeof(line), fp)) != nullptr)
     {
@@ -101,7 +101,7 @@ otError ConfigFile::Get(const char *aKey, int &aIterator, char *aValue, int aVal
     }
 
     VerifyOrExit(ret != nullptr, error = OT_ERROR_NOT_FOUND);
-    VerifyOrDie((pos = ftell(fp)) >= 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((pos = ftell(fp)) >= 0, OT_EXIT_ERROR_ERRNO);
     aIterator = static_cast<int>(pos);
 
 exit:
@@ -122,16 +122,16 @@ otError ConfigFile::Add(const char *aKey, const char *aValue)
     struct stat st;
 
     VerifyOrExit((aKey != nullptr) && (aValue != nullptr), error = OT_ERROR_INVALID_ARGS);
-    VerifyOrDie((path = strdup(mFilePath)) != nullptr, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((path = strdup(mFilePath)) != nullptr, OT_EXIT_ERROR_ERRNO);
     dir = dirname(path);
 
     if (stat(dir, &st) == -1)
     {
-        VerifyOrDie(mkdir(dir, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(mkdir(dir, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0, OT_EXIT_ERROR_ERRNO);
     }
 
-    VerifyOrDie((fp = fopen(mFilePath, "at")) != NULL, OT_EXIT_ERROR_ERRNO);
-    VerifyOrDie(fprintf(fp, "%s=%s\n", aKey, aValue) > 0, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((fp = fopen(mFilePath, "at")) != NULL, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie(fprintf(fp, "%s=%s\n", aKey, aValue) > 0, OT_EXIT_ERROR_ERRNO);
 
 exit:
     if (fp != nullptr)
@@ -156,9 +156,9 @@ otError ConfigFile::Clear(const char *aKey)
     FILE   *fpSwap = nullptr;
 
     VerifyOrExit(aKey != nullptr, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrDie((fp = fopen(mFilePath, "r")) != NULL, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((fp = fopen(mFilePath, "r")) != NULL, OT_EXIT_ERROR_ERRNO);
     snprintf(swapFile, sizeof(swapFile), "%s%s", mFilePath, kSwapSuffix);
-    VerifyOrDie((fpSwap = fopen(swapFile, "w+")) != NULL, OT_EXIT_ERROR_ERRNO);
+    otVerifyOrDie((fpSwap = fopen(swapFile, "w+")) != NULL, OT_EXIT_ERROR_ERRNO);
 
     while (fgets(line, sizeof(line), fp) != nullptr)
     {
@@ -191,7 +191,7 @@ exit:
 
     if (error == OT_ERROR_NONE)
     {
-        VerifyOrDie(rename(swapFile, mFilePath) == 0, OT_EXIT_ERROR_ERRNO);
+        otVerifyOrDie(rename(swapFile, mFilePath) == 0, OT_EXIT_ERROR_ERRNO);
     }
 
     return error;
