@@ -73,10 +73,7 @@ UbusServer::UbusServer(Ncp::ControllerOpenThread *aController, std::mutex *aMute
     blob_buf_init(&mNetworkdataBuf, 0);
 }
 
-UbusServer &UbusServer::GetInstance(void)
-{
-    return *sUbusServerInstance;
-}
+UbusServer &UbusServer::GetInstance(void) { return *sUbusServerInstance; }
 
 void UbusServer::Initialize(Ncp::ControllerOpenThread *aController, std::mutex *aMutex)
 {
@@ -230,8 +227,8 @@ void UbusServer::ProcessScan(void)
     uint16_t scanDuration = 0;
 
     mNcpThreadMutex->lock();
-    SuccessOrExit(error = otLinkActiveScan(mController->GetInstance(), scanChannels, scanDuration,
-                                           &UbusServer::HandleActiveScanResult, this));
+    otbrSuccessOrExit(error = otLinkActiveScan(mController->GetInstance(), scanChannels, scanDuration,
+                                               &UbusServer::HandleActiveScanResult, this));
 exit:
     mNcpThreadMutex->unlock();
     return;
@@ -715,14 +712,14 @@ int UbusServer::UbusThreadHandler(struct ubus_context      *aContext,
     if (!strcmp(aAction, "start"))
     {
         mNcpThreadMutex->lock();
-        SuccessOrExit(error = otIp6SetEnabled(mController->GetInstance(), true));
-        SuccessOrExit(error = otThreadSetEnabled(mController->GetInstance(), true));
+        otbrSuccessOrExit(error = otIp6SetEnabled(mController->GetInstance(), true));
+        otbrSuccessOrExit(error = otThreadSetEnabled(mController->GetInstance(), true));
     }
     else if (!strcmp(aAction, "stop"))
     {
         mNcpThreadMutex->lock();
-        SuccessOrExit(error = otThreadSetEnabled(mController->GetInstance(), false));
-        SuccessOrExit(error = otIp6SetEnabled(mController->GetInstance(), false));
+        otbrSuccessOrExit(error = otThreadSetEnabled(mController->GetInstance(), false));
+        otbrSuccessOrExit(error = otIp6SetEnabled(mController->GetInstance(), false));
     }
 
 exit:
@@ -751,7 +748,7 @@ int UbusServer::UbusParentHandlerDetail(struct ubus_context      *aContext,
     blob_buf_init(&mBuf, 0);
 
     mNcpThreadMutex->lock();
-    SuccessOrExit(error = otThreadGetParentInfo(mController->GetInstance(), &parentInfo));
+    otbrSuccessOrExit(error = otThreadGetParentInfo(mController->GetInstance(), &parentInfo));
 
     jsonArray = blobmsg_open_array(&mBuf, "parent_list");
     jsonList  = blobmsg_open_table(&mBuf, "parent");
@@ -870,23 +867,23 @@ int UbusServer::UbusMgmtset(struct ubus_context      *aContext,
     long                 value;
     int                  length = 0;
 
-    SuccessOrExit(error = otDatasetGetActive(mController->GetInstance(), &dataset));
+    otbrSuccessOrExit(error = otDatasetGetActive(mController->GetInstance(), &dataset));
 
     blobmsg_parse(mgmtsetPolicy, MGMTSET_MAX, tb, blob_data(aMsg), blob_len(aMsg));
     if (tb[NETWORKKEY] != nullptr)
     {
         dataset.mComponents.mIsNetworkKeyPresent = true;
-        VerifyOrExit((length = Hex2Bin(blobmsg_get_string(tb[NETWORKKEY]), dataset.mNetworkKey.m8,
-                                       sizeof(dataset.mNetworkKey.m8))) == OT_NETWORK_KEY_SIZE,
-                     error = OT_ERROR_PARSE);
+        otbrVerifyOrExit((length = Hex2Bin(blobmsg_get_string(tb[NETWORKKEY]), dataset.mNetworkKey.m8,
+                                           sizeof(dataset.mNetworkKey.m8))) == OT_NETWORK_KEY_SIZE,
+                         error = OT_ERROR_PARSE);
         length = 0;
     }
     if (tb[NETWORKNAME] != nullptr)
     {
         dataset.mComponents.mIsNetworkNamePresent = true;
-        VerifyOrExit((length = static_cast<int>(strlen(blobmsg_get_string(tb[NETWORKNAME])))) <=
-                         OT_NETWORK_NAME_MAX_SIZE,
-                     error = OT_ERROR_PARSE);
+        otbrVerifyOrExit((length = static_cast<int>(strlen(blobmsg_get_string(tb[NETWORKNAME])))) <=
+                             OT_NETWORK_NAME_MAX_SIZE,
+                         error = OT_ERROR_PARSE);
         memset(&dataset.mNetworkName, 0, sizeof(dataset.mNetworkName));
         memcpy(dataset.mNetworkName.m8, blobmsg_get_string(tb[NETWORKNAME]), static_cast<size_t>(length));
         length = 0;
@@ -894,28 +891,28 @@ int UbusServer::UbusMgmtset(struct ubus_context      *aContext,
     if (tb[EXTPANID] != nullptr)
     {
         dataset.mComponents.mIsExtendedPanIdPresent = true;
-        VerifyOrExit(Hex2Bin(blobmsg_get_string(tb[EXTPANID]), dataset.mExtendedPanId.m8,
-                             sizeof(dataset.mExtendedPanId.m8)) >= 0,
-                     error = OT_ERROR_PARSE);
+        otbrVerifyOrExit(Hex2Bin(blobmsg_get_string(tb[EXTPANID]), dataset.mExtendedPanId.m8,
+                                 sizeof(dataset.mExtendedPanId.m8)) >= 0,
+                         error = OT_ERROR_PARSE);
     }
     if (tb[PANID] != nullptr)
     {
         dataset.mComponents.mIsPanIdPresent = true;
-        SuccessOrExit(error = ParseLong(blobmsg_get_string(tb[PANID]), value));
+        otbrSuccessOrExit(error = ParseLong(blobmsg_get_string(tb[PANID]), value));
         dataset.mPanId = static_cast<otPanId>(value);
     }
     if (tb[CHANNEL] != nullptr)
     {
         dataset.mComponents.mIsChannelPresent = true;
-        SuccessOrExit(error = ParseLong(blobmsg_get_string(tb[CHANNEL]), value));
+        otbrSuccessOrExit(error = ParseLong(blobmsg_get_string(tb[CHANNEL]), value));
         dataset.mChannel = static_cast<uint16_t>(value);
     }
     if (tb[PSKC] != nullptr)
     {
         dataset.mComponents.mIsPskcPresent = true;
-        VerifyOrExit((length = Hex2Bin(blobmsg_get_string(tb[PSKC]), dataset.mPskc.m8, sizeof(dataset.mPskc.m8))) ==
-                         OT_PSKC_MAX_SIZE,
-                     error = OT_ERROR_PARSE);
+        otbrVerifyOrExit((length = Hex2Bin(blobmsg_get_string(tb[PSKC]), dataset.mPskc.m8, sizeof(dataset.mPskc.m8))) ==
+                             OT_PSKC_MAX_SIZE,
+                         error = OT_ERROR_PARSE);
         length = 0;
     }
     dataset.mActiveTimestamp.mSeconds++;
@@ -923,9 +920,9 @@ int UbusServer::UbusMgmtset(struct ubus_context      *aContext,
     {
         otCommissionerStop(mController->GetInstance());
     }
-    SuccessOrExit(error = otDatasetSendMgmtActiveSet(mController->GetInstance(), &dataset, tlvs,
-                                                     static_cast<uint8_t>(length), /* aCallback */ nullptr,
-                                                     /* aContext */ nullptr));
+    otbrSuccessOrExit(error = otDatasetSendMgmtActiveSet(mController->GetInstance(), &dataset, tlvs,
+                                                         static_cast<uint8_t>(length), /* aCallback */ nullptr,
+                                                         /* aContext */ nullptr));
 exit:
     AppendResult(error, aContext, aRequest);
     return 0;
@@ -975,14 +972,14 @@ int UbusServer::UbusCommissioner(struct ubus_context      *aContext,
             }
             else
             {
-                VerifyOrExit(Hex2Bin(blobmsg_get_string(tb[EUI64]), addr.m8, sizeof(addr)) == sizeof(addr),
-                             error = OT_ERROR_PARSE);
+                otbrVerifyOrExit(Hex2Bin(blobmsg_get_string(tb[EUI64]), addr.m8, sizeof(addr)) == sizeof(addr),
+                                 error = OT_ERROR_PARSE);
                 addrPtr = &addr;
             }
         }
 
         unsigned long timeout = kDefaultJoinerTimeout;
-        SuccessOrExit(
+        otbrSuccessOrExit(
             error = otCommissionerAddJoiner(mController->GetInstance(), addrPtr, pskd, static_cast<uint32_t>(timeout)));
     }
     else if (!strcmp(aAction, "joinerremove"))
@@ -1000,13 +997,13 @@ int UbusServer::UbusCommissioner(struct ubus_context      *aContext,
             }
             else
             {
-                VerifyOrExit(Hex2Bin(blobmsg_get_string(tb[SETNETWORK]), addr.m8, sizeof(addr)) == sizeof(addr),
-                             error = OT_ERROR_PARSE);
+                otbrVerifyOrExit(Hex2Bin(blobmsg_get_string(tb[SETNETWORK]), addr.m8, sizeof(addr)) == sizeof(addr),
+                                 error = OT_ERROR_PARSE);
                 addrPtr = &addr;
             }
         }
 
-        SuccessOrExit(error = otCommissionerRemoveJoiner(mController->GetInstance(), addrPtr));
+        otbrSuccessOrExit(error = otCommissionerRemoveJoiner(mController->GetInstance(), addrPtr));
     }
 
 exit:
@@ -1173,7 +1170,7 @@ int UbusServer::UbusGetInformation(struct ubus_context      *aContext,
     {
         otLeaderData leaderData;
 
-        SuccessOrExit(error = otThreadGetLeaderData(mController->GetInstance(), &leaderData));
+        otbrSuccessOrExit(error = otThreadGetLeaderData(mController->GetInstance(), &leaderData));
 
         sJsonUri = blobmsg_open_table(&mBuf, "leaderdata");
 
@@ -1197,7 +1194,7 @@ int UbusServer::UbusGetInformation(struct ubus_context      *aContext,
 
             blob_buf_init(&mNetworkdataBuf, 0);
 
-            SuccessOrExit(error = otIp6AddressFromString(multicastAddr, &address));
+            otbrSuccessOrExit(error = otIp6AddressFromString(multicastAddr, &address));
 
             tlvTypes[count++] = static_cast<uint8_t>(OT_NETWORK_DIAGNOSTIC_TLV_ROUTE);
             tlvTypes[count++] = static_cast<uint8_t>(OT_NETWORK_DIAGNOSTIC_TLV_CHILD_TABLE);
@@ -1336,7 +1333,7 @@ void UbusServer::HandleDiagnosticGetResponse(otError aError, otMessage *aMessage
     otNetworkDiagTlv      diagTlv;
     otNetworkDiagIterator iterator = OT_NETWORK_DIAGNOSTIC_ITERATOR_INIT;
 
-    SuccessOrExit(aError);
+    otbrSuccessOrExit(aError);
 
     char networkdata[20];
     sprintf(networkdata, "networkdata%d", sBufNum);
@@ -1447,7 +1444,7 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         if (tb[SETNETWORK] != nullptr)
         {
             char *newName = blobmsg_get_string(tb[SETNETWORK]);
-            SuccessOrExit(error = otThreadSetNetworkName(mController->GetInstance(), newName));
+            otbrSuccessOrExit(error = otThreadSetNetworkName(mController->GetInstance(), newName));
         }
     }
     else if (!strcmp(aAction, "channel"))
@@ -1458,7 +1455,7 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         if (tb[SETNETWORK] != nullptr)
         {
             uint32_t channel = blobmsg_get_u32(tb[SETNETWORK]);
-            SuccessOrExit(error = otLinkSetChannel(mController->GetInstance(), static_cast<uint8_t>(channel)));
+            otbrSuccessOrExit(error = otLinkSetChannel(mController->GetInstance(), static_cast<uint8_t>(channel)));
         }
     }
     else if (!strcmp(aAction, "panid"))
@@ -1470,7 +1467,7 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         {
             long  value;
             char *panid = blobmsg_get_string(tb[SETNETWORK]);
-            SuccessOrExit(error = ParseLong(panid, value));
+            otbrSuccessOrExit(error = ParseLong(panid, value));
             error = otLinkSetPanId(mController->GetInstance(), static_cast<otPanId>(value));
         }
     }
@@ -1484,8 +1481,9 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
             otNetworkKey key;
             char        *networkkey = blobmsg_get_string(tb[SETNETWORK]);
 
-            VerifyOrExit(Hex2Bin(networkkey, key.m8, sizeof(key.m8)) == OT_NETWORK_KEY_SIZE, error = OT_ERROR_PARSE);
-            SuccessOrExit(error = otThreadSetNetworkKey(mController->GetInstance(), &key));
+            otbrVerifyOrExit(Hex2Bin(networkkey, key.m8, sizeof(key.m8)) == OT_NETWORK_KEY_SIZE,
+                             error = OT_ERROR_PARSE);
+            otbrSuccessOrExit(error = otThreadSetNetworkKey(mController->GetInstance(), &key));
         }
     }
     else if (!strcmp(aAction, "pskc"))
@@ -1497,9 +1495,9 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         {
             otPskc pskc;
 
-            VerifyOrExit(Hex2Bin(blobmsg_get_string(tb[SETNETWORK]), pskc.m8, sizeof(pskc)) == OT_PSKC_MAX_SIZE,
-                         error = OT_ERROR_PARSE);
-            SuccessOrExit(error = otThreadSetPskc(mController->GetInstance(), &pskc));
+            otbrVerifyOrExit(Hex2Bin(blobmsg_get_string(tb[SETNETWORK]), pskc.m8, sizeof(pskc)) == OT_PSKC_MAX_SIZE,
+                             error = OT_ERROR_PARSE);
+            otbrSuccessOrExit(error = otThreadSetPskc(mController->GetInstance(), &pskc));
         }
     }
     else if (!strcmp(aAction, "extpanid"))
@@ -1511,7 +1509,7 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         {
             otExtendedPanId extPanId;
             char           *input = blobmsg_get_string(tb[SETNETWORK]);
-            VerifyOrExit(Hex2Bin(input, extPanId.m8, sizeof(extPanId)) >= 0, error = OT_ERROR_PARSE);
+            otbrVerifyOrExit(Hex2Bin(input, extPanId.m8, sizeof(extPanId)) >= 0, error = OT_ERROR_PARSE);
             error = otThreadSetExtendedPanId(mController->GetInstance(), &extPanId);
         }
     }
@@ -1541,11 +1539,11 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
                     break;
 
                 default:
-                    ExitNow(error = OT_ERROR_PARSE);
+                    otbrExitNow(error = OT_ERROR_PARSE);
                 }
             }
 
-            SuccessOrExit(error = otThreadSetLinkMode(mController->GetInstance(), linkMode));
+            otbrSuccessOrExit(error = otThreadSetLinkMode(mController->GetInstance(), linkMode));
         }
     }
     else if (!strcmp(aAction, "macfilteradd"))
@@ -1558,11 +1556,12 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         {
             char *addr = blobmsg_get_string(tb[SETNETWORK]);
 
-            VerifyOrExit(Hex2Bin(addr, extAddr.m8, OT_EXT_ADDRESS_SIZE) == OT_EXT_ADDRESS_SIZE, error = OT_ERROR_PARSE);
+            otbrVerifyOrExit(Hex2Bin(addr, extAddr.m8, OT_EXT_ADDRESS_SIZE) == OT_EXT_ADDRESS_SIZE,
+                             error = OT_ERROR_PARSE);
 
             error = otLinkFilterAddAddress(mController->GetInstance(), &extAddr);
 
-            VerifyOrExit(error == OT_ERROR_NONE || error == OT_ERROR_ALREADY);
+            otbrVerifyOrExit(error == OT_ERROR_NONE || error == OT_ERROR_ALREADY);
         }
     }
     else if (!strcmp(aAction, "macfilterremove"))
@@ -1574,7 +1573,8 @@ int UbusServer::UbusSetInformation(struct ubus_context      *aContext,
         if (tb[SETNETWORK] != nullptr)
         {
             char *addr = blobmsg_get_string(tb[SETNETWORK]);
-            VerifyOrExit(Hex2Bin(addr, extAddr.m8, OT_EXT_ADDRESS_SIZE) == OT_EXT_ADDRESS_SIZE, error = OT_ERROR_PARSE);
+            otbrVerifyOrExit(Hex2Bin(addr, extAddr.m8, OT_EXT_ADDRESS_SIZE) == OT_EXT_ADDRESS_SIZE,
+                             error = OT_ERROR_PARSE);
 
             otLinkFilterRemoveAddress(mController->GetInstance(), &extAddr);
         }
@@ -1656,10 +1656,7 @@ void UbusServer::UbusAddFd()
 #endif
 }
 
-void UbusServer::UbusReconnTimer(struct uloop_timeout *aTimeout)
-{
-    GetInstance().UbusReconnTimerDetail(aTimeout);
-}
+void UbusServer::UbusReconnTimer(struct uloop_timeout *aTimeout) { GetInstance().UbusReconnTimerDetail(aTimeout); }
 
 void UbusServer::UbusReconnTimerDetail(struct uloop_timeout *aTimeout)
 {
@@ -1762,7 +1759,7 @@ int UbusServer::Hex2Bin(const char *aHex, uint8_t *aBin, uint16_t aBinLength)
     uint8_t     byte      = 0;
     int         rval;
 
-    VerifyOrExit((hexLength + 1) / 2 <= aBinLength, rval = -1);
+    otbrVerifyOrExit((hexLength + 1) / 2 <= aBinLength, rval = -1);
 
     while (aHex < hexEnd)
     {
@@ -1780,7 +1777,7 @@ int UbusServer::Hex2Bin(const char *aHex, uint8_t *aBin, uint16_t aBinLength)
         }
         else
         {
-            ExitNow(rval = -1);
+            otbrExitNow(rval = -1);
         }
 
         aHex++;
@@ -1821,7 +1818,7 @@ void UBusAgent::Init(void)
 
 void UBusAgent::Update(MainloopContext &aMainloop)
 {
-    VerifyOrExit(otbr::ubus::sUbusEfd != -1);
+    otbrVerifyOrExit(otbr::ubus::sUbusEfd != -1);
 
     FD_SET(otbr::ubus::sUbusEfd, &aMainloop.mReadFdSet);
 
@@ -1842,7 +1839,7 @@ void UBusAgent::Process(const MainloopContext &aMainloop)
 
     mThreadMutex.lock();
 
-    VerifyOrExit(otbr::ubus::sUbusEfd != -1);
+    otbrVerifyOrExit(otbr::ubus::sUbusEfd != -1);
 
     if (FD_ISSET(otbr::ubus::sUbusEfd, &aMainloop.mReadFdSet))
     {

@@ -31,13 +31,7 @@
 
 namespace otbr {
 
-MainloopProcessor::MainloopProcessor(void)
-{
-    MainloopManager::GetInstance().AddMainloopProcessor(this);
-}
+MainloopProcessor::MainloopProcessor(void) { MainloopManager::GetInstance().AddMainloopProcessor(this); }
 
-MainloopProcessor::~MainloopProcessor(void)
-{
-    MainloopManager::GetInstance().RemoveMainloopProcessor(this);
-}
+MainloopProcessor::~MainloopProcessor(void) { MainloopManager::GetInstance().RemoveMainloopProcessor(this); }
 } // namespace otbr

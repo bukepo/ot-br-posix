@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <sysexits.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "utils/hex.hpp"
 #include "utils/pskc.hpp"
 
@@ -67,24 +67,24 @@ int printPSKc(const char *aPassphrase, const char *aExtPanId, const char *aNetwo
     const uint8_t  *pskc;
 
     length = strlen(aPassphrase);
-    VerifyOrExit(length > 0, printf("PASSPHRASE must not be empty.\n"));
-    VerifyOrExit(length <= kMaxPassphrase,
-                 printf("PASSPHRASE Passphrase must be no more than %d bytes.\n", kMaxPassphrase));
+    otbrVerifyOrExit(length > 0, printf("PASSPHRASE must not be empty.\n"));
+    otbrVerifyOrExit(length <= kMaxPassphrase,
+                     printf("PASSPHRASE Passphrase must be no more than %d bytes.\n", kMaxPassphrase));
 
     length = strlen(aExtPanId);
-    VerifyOrExit(length == kSizeExtPanId * 2, printf("EXTPANID length must be %d bytes.\n", kSizeExtPanId));
+    otbrVerifyOrExit(length == kSizeExtPanId * 2, printf("EXTPANID length must be %d bytes.\n", kSizeExtPanId));
     for (size_t i = 0; i < length; i++)
     {
-        VerifyOrExit((aExtPanId[i] <= '9' && aExtPanId[i] >= '0') || (aExtPanId[i] <= 'f' && aExtPanId[i] >= 'a') ||
-                         (aExtPanId[i] <= 'F' && aExtPanId[i] >= 'A'),
-                     printf("EXTPANID must be encoded in hex.\n"));
+        otbrVerifyOrExit((aExtPanId[i] <= '9' && aExtPanId[i] >= '0') || (aExtPanId[i] <= 'f' && aExtPanId[i] >= 'a') ||
+                             (aExtPanId[i] <= 'F' && aExtPanId[i] >= 'A'),
+                         printf("EXTPANID must be encoded in hex.\n"));
     }
     otbr::Utils::Hex2Bytes(aExtPanId, extpanid, sizeof(extpanid));
 
     length = strlen(aNetworkName);
-    VerifyOrExit(length > 0, printf("NETWORK_NAME must not be empty.\n"));
-    VerifyOrExit(length <= kMaxNetworkName,
-                 printf("NETWOR_KNAME length must be no more than %d bytes.\n", kMaxNetworkName));
+    otbrVerifyOrExit(length > 0, printf("NETWORK_NAME must not be empty.\n"));
+    otbrVerifyOrExit(length <= kMaxNetworkName,
+                     printf("NETWOR_KNAME length must be no more than %d bytes.\n", kMaxNetworkName));
 
     pskc = pskcComputer.ComputePskc(extpanid, aNetworkName, aPassphrase);
     for (int i = 0; i < 16; i++)
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
 
-    VerifyOrExit(argc == 4, help(), ret = EX_USAGE);
+    otbrVerifyOrExit(argc == 4, help(), ret = EX_USAGE);
     ret = printPSKc(argv[1], argv[2], argv[3]);
 
 exit:

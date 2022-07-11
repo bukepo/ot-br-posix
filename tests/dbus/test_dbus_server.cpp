@@ -98,14 +98,14 @@ int main()
     dbus_error_init(&dbusErr);
 
     DBusConnection *connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbusErr);
-    VerifyOrExit(connection != nullptr);
+    otbrVerifyOrExit(connection != nullptr);
     dbus_bus_register(connection, &dbusErr);
 
     requestReply =
         dbus_bus_request_name(connection, "io.openthread.TestServer", DBUS_NAME_FLAG_REPLACE_EXISTING, &dbusErr);
-    VerifyOrExit(requestReply == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
-                     requestReply == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER,
-                 ret = EXIT_FAILURE);
+    otbrVerifyOrExit(requestReply == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
+                         requestReply == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER,
+                     ret = EXIT_FAILURE);
 
     {
         TestObject s(connection);

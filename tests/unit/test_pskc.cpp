@@ -30,10 +30,7 @@
 
 #include "utils/pskc.hpp"
 
-TEST_GROUP(Pskc)
-{
-    otbr::Psk::Pskc mPSKc;
-};
+TEST_GROUP(Pskc) { otbr::Psk::Pskc mPSKc; };
 
 TEST(Pskc, Test123456_0001020304050607_OpenThread)
 {

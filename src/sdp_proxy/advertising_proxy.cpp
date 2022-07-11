@@ -45,7 +45,7 @@
 
 #include <assert.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/dns_utils.hpp"
 #include "common/logging.hpp"
 
@@ -209,7 +209,7 @@ void AdvertisingProxy::PublishAllHostsAndServices(void)
 {
     const otSrpServerHost *host = nullptr;
 
-    VerifyOrExit(mPublisher.IsStarted(), mPublisher.Start());
+    otbrVerifyOrExit(mPublisher.IsStarted(), mPublisher.Start());
 
     otbrLogInfo("Publish all hosts and services");
     while ((host = otSrpServerGetNextHost(GetInstance(), host)))
@@ -236,7 +236,7 @@ otbrError AdvertisingProxy::PublishHostAndItsServices(const otSrpServerHost *aHo
 
     otbrLogInfo("Advertise SRP service updates: host=%s", fullHostName.c_str());
 
-    SuccessOrExit(error = SplitFullHostName(fullHostName, hostName, hostDomain));
+    otbrSuccessOrExit(error = SplitFullHostName(fullHostName, hostName, hostDomain));
     hostAddresses = otSrpServerHostGetAddresses(aHost, &hostAddressNum);
     hostDeleted   = otSrpServerHostIsDeleted(aHost);
 
@@ -261,7 +261,8 @@ otbrError AdvertisingProxy::PublishHostAndItsServices(const otSrpServerHost *aHo
         std::string serviceType;
         std::string serviceDomain;
 
-        SuccessOrExit(error = SplitFullServiceInstanceName(fullServiceName, serviceName, serviceType, serviceDomain));
+        otbrSuccessOrExit(error =
+                              SplitFullServiceInstanceName(fullServiceName, serviceName, serviceType, serviceDomain));
 
         if (!hostDeleted && !otSrpServerServiceIsDeleted(service))
         {
@@ -357,8 +358,8 @@ Mdns::Publisher::SubTypeList AdvertisingProxy::MakeSubTypeList(const otSrpServer
         const char *subTypeName = otSrpServerServiceGetSubTypeServiceNameAt(aSrpService, index);
         char        subLabel[OT_DNS_MAX_LABEL_SIZE];
 
-        VerifyOrExit(subTypeName != nullptr);
-        SuccessOrExit(otSrpServerParseSubTypeServiceName(subTypeName, subLabel, sizeof(subLabel)));
+        otbrVerifyOrExit(subTypeName != nullptr);
+        otbrSuccessOrExit(otSrpServerParseSubTypeServiceName(subTypeName, subLabel, sizeof(subLabel)));
         subTypeList.emplace_back(subLabel);
     }
 

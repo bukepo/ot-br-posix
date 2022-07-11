@@ -35,7 +35,7 @@
 
 #if OTBR_ENABLE_DUA_ROUTING
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 
@@ -43,7 +43,7 @@ namespace BackboneRouter {
 
 void DuaRoutingManager::Enable(const Ip6Prefix &aDomainPrefix)
 {
-    VerifyOrExit(!mEnabled);
+    otbrVerifyOrExit(!mEnabled);
     mEnabled = true;
 
     mDomainPrefix = aDomainPrefix;
@@ -57,7 +57,7 @@ exit:
 
 void DuaRoutingManager::Disable(void)
 {
-    VerifyOrExit(mEnabled);
+    otbrVerifyOrExit(mEnabled);
     mEnabled = false;
 
     DelDefaultRouteToThread();

@@ -30,12 +30,9 @@
 
 #include <assert.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
-static bool NameEndsWithDot(const std::string &aName)
-{
-    return !aName.empty() && aName.back() == '.';
-}
+static bool NameEndsWithDot(const std::string &aName) { return !aName.empty() && aName.back() == '.'; }
 
 DnsNameInfo SplitFullDnsName(const std::string &aName)
 {
@@ -102,7 +99,7 @@ otbrError SplitFullServiceInstanceName(const std::string &aFullName,
     otbrError   error    = OTBR_ERROR_NONE;
     DnsNameInfo nameInfo = SplitFullDnsName(aFullName);
 
-    VerifyOrExit(nameInfo.IsServiceInstance(), error = OTBR_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(nameInfo.IsServiceInstance(), error = OTBR_ERROR_INVALID_ARGS);
 
     aInstanceName = std::move(nameInfo.mInstanceName);
     aType         = std::move(nameInfo.mServiceName);
@@ -117,7 +114,7 @@ otbrError SplitFullServiceName(const std::string &aFullName, std::string &aType,
     otbrError   error    = OTBR_ERROR_NONE;
     DnsNameInfo nameInfo = SplitFullDnsName(aFullName);
 
-    VerifyOrExit(nameInfo.IsService(), error = OTBR_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(nameInfo.IsService(), error = OTBR_ERROR_INVALID_ARGS);
 
     aType   = std::move(nameInfo.mServiceName);
     aDomain = std::move(nameInfo.mDomain);
@@ -131,7 +128,7 @@ otbrError SplitFullHostName(const std::string &aFullName, std::string &aHostName
     otbrError   error    = OTBR_ERROR_NONE;
     DnsNameInfo nameInfo = SplitFullDnsName(aFullName);
 
-    VerifyOrExit(nameInfo.IsHost(), error = OTBR_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(nameInfo.IsHost(), error = OTBR_ERROR_INVALID_ARGS);
 
     aHostName = std::move(nameInfo.mHostName);
     aDomain   = std::move(nameInfo.mDomain);

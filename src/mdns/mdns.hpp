@@ -46,8 +46,8 @@
 #include <sys/select.h>
 
 #include "common/callback.hpp"
-#include "common/code_utils.hpp"
-#include "common/time.hpp"
+#include "common/code_helpers.hpp"
+#include "common/time_utils.hpp"
 #include "common/types.hpp"
 
 namespace otbr {

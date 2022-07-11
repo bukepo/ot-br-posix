@@ -44,7 +44,7 @@
 #include <openthread/link.h>
 #include <openthread/platform/trel.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "utils/hex.hpp"
 #include "utils/string_utils.hpp"
 
@@ -52,30 +52,18 @@ static const char kTrelServiceName[] = "_trel._udp";
 
 static otbr::TrelDnssd::TrelDnssd *sTrelDnssd = nullptr;
 
-void trelDnssdInitialize(const char *aTrelNetif)
-{
-    sTrelDnssd->Initialize(aTrelNetif);
-}
+void trelDnssdInitialize(const char *aTrelNetif) { sTrelDnssd->Initialize(aTrelNetif); }
 
-void trelDnssdStartBrowse(void)
-{
-    sTrelDnssd->StartBrowse();
-}
+void trelDnssdStartBrowse(void) { sTrelDnssd->StartBrowse(); }
 
-void trelDnssdStopBrowse(void)
-{
-    sTrelDnssd->StopBrowse();
-}
+void trelDnssdStopBrowse(void) { sTrelDnssd->StopBrowse(); }
 
 void trelDnssdRegisterService(uint16_t aPort, const uint8_t *aTxtData, uint8_t aTxtLength)
 {
     sTrelDnssd->RegisterService(aPort, aTxtData, aTxtLength);
 }
 
-void trelDnssdRemoveService(void)
-{
-    sTrelDnssd->UnregisterService();
-}
+void trelDnssdRemoveService(void) { sTrelDnssd->UnregisterService(); }
 
 namespace otbr {
 
@@ -105,7 +93,7 @@ void TrelDnssd::Initialize(std::string aTrelNetif)
 
 void TrelDnssd::StartBrowse(void)
 {
-    VerifyOrExit(IsInitialized());
+    otbrVerifyOrExit(IsInitialized());
 
     otbrLogDebug("Start browsing %s services ...", kTrelServiceName);
 
@@ -127,7 +115,7 @@ exit:
 
 void TrelDnssd::StopBrowse(void)
 {
-    VerifyOrExit(IsInitialized());
+    otbrVerifyOrExit(IsInitialized());
 
     otbrLogDebug("Stop browsing %s service.", kTrelServiceName);
     assert(mSubscriberId > 0);
@@ -149,7 +137,7 @@ void TrelDnssd::RegisterService(uint16_t aPort, const uint8_t *aTxtData, uint8_t
     assert(aPort > 0);
     assert(aTxtData != nullptr);
 
-    VerifyOrExit(IsInitialized());
+    otbrVerifyOrExit(IsInitialized());
 
     otbrLogDebug("Register %s service: port=%u, TXT=%d bytes", kTrelServiceName, aPort, aTxtLength);
     otbrDump(OTBR_LOG_DEBUG, OTBR_LOG_TAG, "TXT", aTxtData, aTxtLength);
@@ -173,7 +161,7 @@ exit:
 void TrelDnssd::UnregisterService(void)
 {
     // Return if service has not been registered
-    VerifyOrExit(IsInitialized() && mRegisterInfo.IsValid());
+    otbrVerifyOrExit(IsInitialized() && mRegisterInfo.IsValid());
 
     otbrLogDebug("Remove %s service", kTrelServiceName);
 
@@ -190,7 +178,7 @@ exit:
 
 void TrelDnssd::OnMdnsPublisherReady(void)
 {
-    VerifyOrExit(IsInitialized());
+    otbrVerifyOrExit(IsInitialized());
 
     otbrLogDebug("mDNS Publisher is Ready");
     mMdnsPublisherReady = true;
@@ -210,8 +198,8 @@ exit:
 void TrelDnssd::OnTrelServiceInstanceResolved(const std::string                             &aType,
                                               const Mdns::Publisher::DiscoveredInstanceInfo &aInstanceInfo)
 {
-    VerifyOrExit(StringUtils::EqualCaseInsensitive(aType, kTrelServiceName));
-    VerifyOrExit(aInstanceInfo.mNetifIndex == mTrelNetifIndex);
+    otbrVerifyOrExit(StringUtils::EqualCaseInsensitive(aType, kTrelServiceName));
+    otbrVerifyOrExit(aInstanceInfo.mNetifIndex == mTrelNetifIndex);
 
     if (aInstanceInfo.mRemoved)
     {
@@ -300,7 +288,7 @@ void TrelDnssd::OnTrelServiceInstanceAdded(const Mdns::Publisher::DiscoveredInst
     if (aInstanceInfo.mAddresses.empty())
     {
         otbrLogWarning("Peer %s does not have any IPv6 address, ignored", aInstanceInfo.mName.c_str());
-        ExitNow();
+        otbrExitNow();
     }
 
     peerInfo.mRemoved = false;
@@ -312,7 +300,7 @@ void TrelDnssd::OnTrelServiceInstanceAdded(const Mdns::Publisher::DiscoveredInst
     {
         Peer peer(aInstanceInfo.mTxtData, peerInfo.mSockAddr);
 
-        VerifyOrExit(peer.mValid, otbrLogWarning("Peer %s is invalid", aInstanceInfo.mName.c_str()));
+        otbrVerifyOrExit(peer.mValid, otbrLogWarning("Peer %s is invalid", aInstanceInfo.mName.c_str()));
 
         otPlatTrelHandleDiscoveredPeerInfo(mNcp.GetInstance(), &peerInfo);
 
@@ -329,7 +317,7 @@ void TrelDnssd::OnTrelServiceInstanceRemoved(const std::string &aInstanceName)
     std::string instanceName = StringUtils::ToLowercase(aInstanceName);
     auto        it           = mPeers.find(instanceName);
 
-    VerifyOrExit(it != mPeers.end());
+    otbrVerifyOrExit(it != mPeers.end());
 
     otbrLogDebug("Peer removed: %s", instanceName.c_str());
 
@@ -350,7 +338,7 @@ void TrelDnssd::CheckPeersNumLimit(void)
 {
     const PeerMap::value_type *oldestPeer = nullptr;
 
-    VerifyOrExit(mPeers.size() >= kPeerCacheSize);
+    otbrVerifyOrExit(mPeers.size() >= kPeerCacheSize);
 
     for (const auto &entry : mPeers)
     {
@@ -484,7 +472,7 @@ void TrelDnssd::Peer::ReadExtAddrFromTxtData(void)
 
     memset(&mExtAddr, 0, sizeof(mExtAddr));
 
-    SuccessOrExit(Mdns::Publisher::DecodeTxtData(txtEntries, mTxtData.data(), mTxtData.size()));
+    otbrSuccessOrExit(Mdns::Publisher::DecodeTxtData(txtEntries, mTxtData.data(), mTxtData.size()));
 
     for (const auto &txtEntry : txtEntries)
     {
@@ -495,7 +483,7 @@ void TrelDnssd::Peer::ReadExtAddrFromTxtData(void)
 
         if (StringUtils::EqualCaseInsensitive(txtEntry.mKey, kTxtRecordExtAddressKey))
         {
-            VerifyOrExit(txtEntry.mValue.size() == sizeof(mExtAddr));
+            otbrVerifyOrExit(txtEntry.mValue.size() == sizeof(mExtAddr));
 
             memcpy(mExtAddr.m8, txtEntry.mValue.data(), sizeof(mExtAddr));
             mValid = true;

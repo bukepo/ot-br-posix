@@ -38,7 +38,7 @@ set(OT_POSIX_RCP_VENDOR_TARGET "" CACHE STRING
 if(OT_POSIX_RCP_VENDOR_BUS)
     add_library(rcp-vendor-intf ${OT_POSIX_CONFIG_RCP_VENDOR_INTERFACE})
 
-    target_link_libraries(rcp-vendor-intf PUBLIC ot-posix-config)
+    target_link_libraries(rcp-vendor-intf PUBLIC otbr-config)
 
     target_include_directories(rcp-vendor-intf
         PUBLIC

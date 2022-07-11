@@ -130,6 +130,19 @@ public:
      */
     void Process(const void *aMainloopContext);
 
+#if OPENTHREAD_POSIX_VIRTUAL_TIME
+    /**
+     * This method process read data (decode the data).
+     *
+     * This method is intended only for virtual time simulation. Its behavior is similar to `Read()` but instead of
+     * reading the data from the radio socket, it uses the given data in @p `aEvent`.
+     *
+     * @param[in] aEvent   The data event.
+     *
+     */
+    void Process(const VirtualTimeEvent &aEvent) { Decode(aEvent.mData, aEvent.mDataLength); }
+#endif
+
     /**
      * Returns the bus speed between the host and the radio.
      *

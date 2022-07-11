@@ -30,23 +30,20 @@
 #include <sstream>
 #include <sys/socket.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/types.hpp"
 
 namespace otbr {
 
-Ip6Address::Ip6Address(const uint8_t (&aAddress)[16])
-{
-    memcpy(m8, aAddress, sizeof(m8));
-}
+Ip6Address::Ip6Address(const uint8_t (&aAddress)[16]) { memcpy(m8, aAddress, sizeof(m8)); }
 
 std::string Ip6Address::ToString() const
 {
     char strbuf[INET6_ADDRSTRLEN];
 
-    VerifyOrDie(inet_ntop(AF_INET6, this->m8, strbuf, sizeof(strbuf)) != nullptr,
-                "Failed to convert Ip6 address to string");
+    otbrVerifyOrDie(inet_ntop(AF_INET6, this->m8, strbuf, sizeof(strbuf)) != nullptr,
+                    "Failed to convert Ip6 address to string");
 
     return std::string(strbuf);
 }
@@ -69,10 +66,7 @@ void Ip6Address::CopyTo(struct sockaddr_in6 &aSockAddr) const
     aSockAddr.sin6_family = AF_INET6;
 }
 
-void Ip6Address::CopyFrom(const struct sockaddr_in6 &aSockAddr)
-{
-    CopyFrom(aSockAddr.sin6_addr);
-}
+void Ip6Address::CopyFrom(const struct sockaddr_in6 &aSockAddr) { CopyFrom(aSockAddr.sin6_addr); }
 
 void Ip6Address::CopyTo(struct in6_addr &aIn6Addr) const
 {
@@ -99,23 +93,20 @@ Ip6Address Ip6Address::FromString(const char *aStr)
 {
     Ip6Address addr;
 
-    SuccessOrDie(FromString(aStr, addr), "inet_pton failed");
+    otbrSuccessOrDie(FromString(aStr, addr), "inet_pton failed");
 
     return addr;
 }
 
-void Ip6Prefix::Set(const otIp6Prefix &aPrefix)
-{
-    memcpy(reinterpret_cast<void *>(this), &aPrefix, sizeof(*this));
-}
+void Ip6Prefix::Set(const otIp6Prefix &aPrefix) { memcpy(reinterpret_cast<void *>(this), &aPrefix, sizeof(*this)); }
 
 std::string Ip6Prefix::ToString() const
 {
     std::stringbuf strBuilder;
     char           strbuf[INET6_ADDRSTRLEN];
 
-    VerifyOrDie(inet_ntop(AF_INET6, mPrefix.m8, strbuf, sizeof(strbuf)) != nullptr,
-                "Failed to convert Ip6 prefix to string");
+    otbrVerifyOrDie(inet_ntop(AF_INET6, mPrefix.m8, strbuf, sizeof(strbuf)) != nullptr,
+                    "Failed to convert Ip6 prefix to string");
 
     strBuilder.sputn(strbuf, strlen(strbuf));
     strBuilder.sputc('/');

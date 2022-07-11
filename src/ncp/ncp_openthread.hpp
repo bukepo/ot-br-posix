@@ -185,10 +185,7 @@ public:
      * @returns the applied FeatureFlagList's serialized bytes.
      *
      */
-    const std::string &GetAppliedFeatureFlagListBytes(void)
-    {
-        return mAppliedFeatureFlagListBytes;
-    }
+    const std::string &GetAppliedFeatureFlagListBytes(void) { return mAppliedFeatureFlagListBytes; }
 #endif
 
     ~ControllerOpenThread(void) override;

@@ -50,7 +50,7 @@
 #include <openthread/platform/radio.h>
 #include <openthread/platform/settings.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/types.hpp"
 #if OTBR_ENABLE_FEATURE_FLAGS
@@ -73,7 +73,7 @@ ControllerOpenThread::ControllerOpenThread(const char                      *aInt
     : mInstance(nullptr)
     , mEnableAutoAttach(aEnableAutoAttach)
 {
-    VerifyOrDie(aRadioUrls.size() <= OT_PLATFORM_CONFIG_MAX_RADIO_URLS, "Too many Radio URLs!");
+    otbrVerifyOrDie(aRadioUrls.size() <= OT_PLATFORM_CONFIG_MAX_RADIO_URLS, "Too many Radio URLs!");
 
     memset(&mConfig, 0, sizeof(mConfig));
 
@@ -210,7 +210,7 @@ void ControllerOpenThread::Init(void)
     FeatureFlagList featureFlagList;
 #endif
 
-    VerifyOrExit(otLoggingSetLevel(level) == OT_ERROR_NONE, error = OTBR_ERROR_OPENTHREAD);
+    otbrVerifyOrExit(otLoggingSetLevel(level) == OT_ERROR_NONE, error = OTBR_ERROR_OPENTHREAD);
 
     mInstance = otSysInit(&mConfig);
     assert(mInstance != nullptr);
@@ -219,7 +219,7 @@ void ControllerOpenThread::Init(void)
         otError result = otSetStateChangedCallback(mInstance, &ControllerOpenThread::HandleStateChanged, this);
 
         agent::ThreadHelper::LogOpenThreadResult("Set state callback", result);
-        VerifyOrExit(result == OT_ERROR_NONE, error = OTBR_ERROR_OPENTHREAD);
+        otbrVerifyOrExit(result == OT_ERROR_NONE, error = OTBR_ERROR_OPENTHREAD);
     }
 
 #if OTBR_ENABLE_FEATURE_FLAGS && OTBR_ENABLE_TREL
@@ -253,7 +253,7 @@ void ControllerOpenThread::Init(void)
     mThreadHelper = std::unique_ptr<otbr::agent::ThreadHelper>(new otbr::agent::ThreadHelper(mInstance, this));
 
 exit:
-    SuccessOrDie(error, "Failed to initialize NCP!");
+    otbrSuccessOrDie(error, "Failed to initialize NCP!");
 }
 
 #if OTBR_ENABLE_FEATURE_FLAGS
@@ -330,15 +330,9 @@ void ControllerOpenThread::Process(const MainloopContext &aMainloop)
     }
 }
 
-bool ControllerOpenThread::IsAutoAttachEnabled(void)
-{
-    return mEnableAutoAttach;
-}
+bool ControllerOpenThread::IsAutoAttachEnabled(void) { return mEnableAutoAttach; }
 
-void ControllerOpenThread::DisableAutoAttach(void)
-{
-    mEnableAutoAttach = false;
-}
+void ControllerOpenThread::DisableAutoAttach(void) { mEnableAutoAttach = false; }
 
 void ControllerOpenThread::PostTimerTask(Milliseconds aDelay, TaskRunner::Task<void> aTask)
 {

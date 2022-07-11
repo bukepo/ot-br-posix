@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "web/web-service/web_server.hpp"
 
@@ -63,10 +63,7 @@ static void HandleSignal(int aSignal)
     }
 }
 
-static void PrintVersion(void)
-{
-    printf("%s\n", OTBR_PACKAGE_VERSION);
-}
+static void PrintVersion(void) { printf("%s\n", OTBR_PACKAGE_VERSION); }
 
 int main(int argc, char **argv)
 {
@@ -94,19 +91,19 @@ int main(int argc, char **argv)
 
         case 'p':
             httpPort = optarg;
-            VerifyOrExit(httpPort != nullptr);
+            otbrVerifyOrExit(httpPort != nullptr);
             port = atoi(httpPort);
             break;
 
         case 'v':
             PrintVersion();
-            ExitNow();
+            otbrExitNow();
             break;
 
         default:
             fprintf(stderr, "Usage: %s [-d DEBUG_LEVEL] [-I interfaceName] [-p port] [-a listenAddress] [-v]\n",
                     argv[0]);
-            ExitNow(ret = -1);
+            otbrExitNow(ret = -1);
             break;
         }
     }

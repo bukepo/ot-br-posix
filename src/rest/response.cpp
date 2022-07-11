@@ -55,55 +55,25 @@ Response::Response(void)
     mHeaders["Connection"]                   = OT_REST_RESPONSE_CONNECTION;
 }
 
-void Response::SetComplete()
-{
-    mComplete = true;
-}
+void Response::SetComplete() { mComplete = true; }
 
-void Response::SetStartTime(steady_clock::time_point aStartTime)
-{
-    mStartTime = aStartTime;
-}
+void Response::SetStartTime(steady_clock::time_point aStartTime) { mStartTime = aStartTime; }
 
-steady_clock::time_point Response::GetStartTime() const
-{
-    return mStartTime;
-}
+steady_clock::time_point Response::GetStartTime() const { return mStartTime; }
 
-bool Response::IsComplete()
-{
-    return mComplete == true;
-}
+bool Response::IsComplete() { return mComplete == true; }
 
-void Response::SetResponsCode(std::string &aCode)
-{
-    mCode = aCode;
-}
+void Response::SetResponsCode(std::string &aCode) { mCode = aCode; }
 
-void Response::SetContentType(const std::string &aContentType)
-{
-    mHeaders[OT_REST_CONTENT_TYPE_HEADER] = aContentType;
-}
+void Response::SetContentType(const std::string &aContentType) { mHeaders[OT_REST_CONTENT_TYPE_HEADER] = aContentType; }
 
-void Response::SetCallback(void)
-{
-    mCallback = true;
-}
+void Response::SetCallback(void) { mCallback = true; }
 
-void Response::SetBody(std::string &aBody)
-{
-    mBody = aBody;
-}
+void Response::SetBody(std::string &aBody) { mBody = aBody; }
 
-std::string Response::GetBody(void) const
-{
-    return mBody;
-}
+std::string Response::GetBody(void) const { return mBody; }
 
-bool Response::NeedCallback(void)
-{
-    return mCallback;
-}
+bool Response::NeedCallback(void) { return mCallback; }
 
 std::string Response::Serialize(void) const
 {

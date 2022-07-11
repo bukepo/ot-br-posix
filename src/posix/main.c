@@ -348,6 +348,7 @@ static otError ProcessExit(void *aContext, uint8_t aArgsLength, char *aArgs[])
     OT_UNUSED_VARIABLE(aArgs);
 
     exit(EXIT_SUCCESS);
+    return OT_ERROR_NONE;
 }
 #endif
 

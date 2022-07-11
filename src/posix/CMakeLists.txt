@@ -28,8 +28,9 @@
 
 set(COMMON_INCLUDES
     ${OT_PUBLIC_INCLUDES}
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/src/core
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src/core
     ${PROJECT_SOURCE_DIR}/src/posix/platform
     ${PROJECT_SOURCE_DIR}/src/posix/platform/include
 )
@@ -41,6 +42,9 @@ set(OT_READLINE_VALUES
 
 set(OT_READLINE "" CACHE STRING "set readline library name")
 set_property(CACHE OT_READLINE PROPERTY STRINGS ${OT_READLINE_VALUES})
+
+target_include_directories(otbr-config INTERFACE ${PROJECT_SOURCE_DIR}/src/posix/platform)
+add_subdirectory("${PROJECT_SOURCE_DIR}/src/posix/platform")
 
 if(OT_READLINE STREQUAL "")
     foreach(X IN LISTS OT_READLINE_VALUES)

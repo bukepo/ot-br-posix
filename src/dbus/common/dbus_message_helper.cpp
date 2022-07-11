@@ -36,7 +36,7 @@ otbrError DBusMessageExtract(DBusMessageIter *aIter, bool &aValue)
     otbrError   error = OTBR_ERROR_DBUS;
     dbus_bool_t val;
 
-    VerifyOrExit(dbus_message_iter_get_arg_type(aIter) == DBUS_TYPE_BOOLEAN);
+    otbrVerifyOrExit(dbus_message_iter_get_arg_type(aIter) == DBUS_TYPE_BOOLEAN);
     dbus_message_iter_get_basic(aIter, &val);
     dbus_message_iter_next(aIter);
     aValue = (val != 0);
@@ -51,7 +51,7 @@ otbrError DBusMessageExtract(DBusMessageIter *aIter, int8_t &aValue)
     otbrError error = OTBR_ERROR_NONE;
     uint8_t   val;
 
-    SuccessOrExit(error = DBusMessageExtract(aIter, val));
+    otbrSuccessOrExit(error = DBusMessageExtract(aIter, val));
     aValue = static_cast<int8_t>(val);
 exit:
     return error;
@@ -62,7 +62,7 @@ otbrError DBusMessageExtract(DBusMessageIter *aIter, std::string &aValue)
     const char *buf;
     otbrError   error = OTBR_ERROR_NONE;
 
-    VerifyOrExit(dbus_message_iter_get_arg_type(aIter) == DBUS_TYPE_STRING, error = OTBR_ERROR_DBUS);
+    otbrVerifyOrExit(dbus_message_iter_get_arg_type(aIter) == DBUS_TYPE_STRING, error = OTBR_ERROR_DBUS);
     dbus_message_iter_get_basic(aIter, &buf);
     dbus_message_iter_next(aIter);
     aValue = buf;
@@ -111,7 +111,7 @@ otbrError DBusMessageEncode(DBusMessageIter *aIter, bool aValue)
     dbus_bool_t val   = aValue ? 1 : 0;
     otbrError   error = OTBR_ERROR_NONE;
 
-    VerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_BOOLEAN, &val), error = OTBR_ERROR_DBUS);
+    otbrVerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_BOOLEAN, &val), error = OTBR_ERROR_DBUS);
 
 exit:
     return error;
@@ -127,7 +127,7 @@ otbrError DBusMessageEncode(DBusMessageIter *aIter, const std::string &aValue)
     otbrError   error = OTBR_ERROR_NONE;
     const char *buf   = aValue.c_str();
 
-    VerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_STRING, &buf), error = OTBR_ERROR_DBUS);
+    otbrVerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_STRING, &buf), error = OTBR_ERROR_DBUS);
 
 exit:
     return error;
@@ -137,7 +137,7 @@ otbrError DBusMessageEncode(DBusMessageIter *aIter, const char *aValue)
 {
     otbrError error = OTBR_ERROR_NONE;
 
-    VerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_STRING, &aValue), error = OTBR_ERROR_DBUS);
+    otbrVerifyOrExit(dbus_message_iter_append_basic(aIter, DBUS_TYPE_STRING, &aValue), error = OTBR_ERROR_DBUS);
 exit:
     return error;
 }

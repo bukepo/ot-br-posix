@@ -32,7 +32,7 @@
 
 #include <sstream>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 namespace otbr {
@@ -172,7 +172,8 @@ void DumpDBusMessage(DBusMessage &aMessage)
     DBusMessageIter    iter;
     std::ostringstream sout;
 
-    VerifyOrExit(dbus_message_iter_init(&aMessage, &iter), otbrLogDebug("Failed to iterate dbus message during dump"));
+    otbrVerifyOrExit(dbus_message_iter_init(&aMessage, &iter),
+                     otbrLogDebug("Failed to iterate dbus message during dump"));
     sout << "{ ";
     DumpDBusMessage(sout, &iter);
     sout << "}";

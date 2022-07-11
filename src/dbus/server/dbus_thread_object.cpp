@@ -45,10 +45,8 @@
 #include <openthread/platform/radio.h>
 
 #include "common/api_strings.hpp"
-#include "common/byteswap.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "dbus/common/constants.hpp"
-#include "dbus/server/dbus_agent.hpp"
 #include "dbus/server/dbus_thread_object.hpp"
 #if OTBR_ENABLE_FEATURE_FLAGS
 #include "proto/feature_flag.pb.h"
@@ -104,7 +102,7 @@ otbrError DBusThreadObject::Init(void)
     otbrError error        = OTBR_ERROR_NONE;
     auto      threadHelper = mNcp->GetThreadHelper();
 
-    SuccessOrExit(error = DBusObject::Init());
+    otbrSuccessOrExit(error = DBusObject::Init());
 
     threadHelper->AddDeviceRoleHandler(std::bind(&DBusThreadObject::DeviceRoleHandler, this, _1));
     threadHelper->AddActiveDatasetChangeHandler(std::bind(&DBusThreadObject::ActiveDatasetChangeHandler, this, _1));
@@ -275,7 +273,7 @@ otbrError DBusThreadObject::Init(void)
     RegisterGetPropertyHandler(OTBR_DBUS_THREAD_INTERFACE, OTBR_DBUS_PROPERTY_CAPABILITIES,
                                std::bind(&DBusThreadObject::GetCapabilitiesHandler, this, _1));
 
-    SuccessOrExit(error = Signal(OTBR_DBUS_THREAD_INTERFACE, OTBR_DBUS_SIGNAL_READY, std::make_tuple()));
+    otbrSuccessOrExit(error = Signal(OTBR_DBUS_THREAD_INTERFACE, OTBR_DBUS_SIGNAL_READY, std::make_tuple()));
 
 exit:
     return error;
@@ -338,7 +336,8 @@ void DBusThreadObject::EnergyScanHandler(DBusRequest &aRequest)
 
     auto args = std::tie(scanDuration);
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
     threadHelper->EnergyScan(scanDuration, std::bind(&DBusThreadObject::ReplyEnergyScanResult, this, aRequest, _1, _2));
 
 exit:
@@ -416,7 +415,8 @@ void DBusThreadObject::AttachAllNodesToHandler(DBusRequest &aRequest)
 
     auto args = std::tie(dataset);
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
     mNcp->GetThreadHelper()->AttachAllNodesTo(dataset, [aRequest](otError error, int64_t aAttachDelayMs) mutable {
         aRequest.ReplyOtResult<int64_t>(error, aAttachDelayMs);
@@ -438,8 +438,8 @@ void DBusThreadObject::FactoryResetHandler(DBusRequest &aRequest)
 {
     otError error = OT_ERROR_NONE;
 
-    SuccessOrExit(error = mNcp->GetThreadHelper()->Detach());
-    SuccessOrExit(otInstanceErasePersistentInfo(mNcp->GetThreadHelper()->GetInstance()));
+    otbrSuccessOrExit(error = mNcp->GetThreadHelper()->Detach());
+    otbrSuccessOrExit(otInstanceErasePersistentInfo(mNcp->GetThreadHelper()->GetInstance()));
     mNcp->Reset();
 
 exit:
@@ -506,7 +506,8 @@ void DBusThreadObject::AddOnMeshPrefixHandler(DBusRequest &aRequest)
     otError              error = OT_ERROR_NONE;
     otBorderRouterConfig config;
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
     // size is guaranteed by parsing
     std::copy(onMeshPrefix.mPrefix.mPrefix.begin(), onMeshPrefix.mPrefix.mPrefix.end(),
@@ -520,8 +521,8 @@ void DBusThreadObject::AddOnMeshPrefixHandler(DBusRequest &aRequest)
     config.mOnMesh         = onMeshPrefix.mOnMesh;
     config.mStable         = onMeshPrefix.mStable;
 
-    SuccessOrExit(error = otBorderRouterAddOnMeshPrefix(threadHelper->GetInstance(), &config));
-    SuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
+    otbrSuccessOrExit(error = otBorderRouterAddOnMeshPrefix(threadHelper->GetInstance(), &config));
+    otbrSuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
 
 exit:
     aRequest.ReplyOtResult(error);
@@ -535,13 +536,14 @@ void DBusThreadObject::RemoveOnMeshPrefixHandler(DBusRequest &aRequest)
     otError     error = OT_ERROR_NONE;
     otIp6Prefix prefix;
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
     // size is guaranteed by parsing
     std::copy(onMeshPrefix.mPrefix.begin(), onMeshPrefix.mPrefix.end(), &prefix.mPrefix.mFields.m8[0]);
     prefix.mLength = onMeshPrefix.mLength;
 
-    SuccessOrExit(error = otBorderRouterRemoveOnMeshPrefix(threadHelper->GetInstance(), &prefix));
-    SuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
+    otbrSuccessOrExit(error = otBorderRouterRemoveOnMeshPrefix(threadHelper->GetInstance(), &prefix));
+    otbrSuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
 
 exit:
     aRequest.ReplyOtResult(error);
@@ -556,7 +558,8 @@ void DBusThreadObject::AddExternalRouteHandler(DBusRequest &aRequest)
     otExternalRouteConfig otRoute;
     otIp6Prefix          &prefix = otRoute.mPrefix;
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
     // size is guaranteed by parsing
     std::copy(route.mPrefix.mPrefix.begin(), route.mPrefix.mPrefix.end(), &prefix.mPrefix.mFields.m8[0]);
@@ -564,10 +567,10 @@ void DBusThreadObject::AddExternalRouteHandler(DBusRequest &aRequest)
     otRoute.mPreference = route.mPreference;
     otRoute.mStable     = route.mStable;
 
-    SuccessOrExit(error = otBorderRouterAddRoute(threadHelper->GetInstance(), &otRoute));
+    otbrSuccessOrExit(error = otBorderRouterAddRoute(threadHelper->GetInstance(), &otRoute));
     if (route.mStable)
     {
-        SuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
+        otbrSuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
     }
 
 exit:
@@ -582,14 +585,15 @@ void DBusThreadObject::RemoveExternalRouteHandler(DBusRequest &aRequest)
     otError     error = OT_ERROR_NONE;
     otIp6Prefix prefix;
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
     // size is guaranteed by parsing
     std::copy(routePrefix.mPrefix.begin(), routePrefix.mPrefix.end(), &prefix.mPrefix.mFields.m8[0]);
     prefix.mLength = routePrefix.mLength;
 
-    SuccessOrExit(error = otBorderRouterRemoveRoute(threadHelper->GetInstance(), &prefix));
-    SuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
+    otbrSuccessOrExit(error = otBorderRouterRemoveRoute(threadHelper->GetInstance(), &prefix));
+    otbrSuccessOrExit(error = otBorderRouterRegister(threadHelper->GetInstance()));
 
 exit:
     aRequest.ReplyOtResult(error);
@@ -611,7 +615,7 @@ otError DBusThreadObject::SetMeshLocalPrefixHandler(DBusMessageIter &aIter)
     std::array<uint8_t, OTBR_IP6_PREFIX_SIZE> data{};
     otError                                   error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
     memcpy(&prefix.m8, &data.front(), sizeof(prefix.m8));
     error = otThreadSetMeshLocalPrefix(threadHelper->GetInstance(), &prefix);
 
@@ -626,7 +630,7 @@ otError DBusThreadObject::SetLinkModeHandler(DBusMessageIter &aIter)
     otLinkModeConfig otCfg;
     otError          error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, cfg) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, cfg) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
     otCfg.mDeviceType   = cfg.mDeviceType;
     otCfg.mNetworkData  = cfg.mNetworkData;
     otCfg.mRxOnWhenIdle = cfg.mRxOnWhenIdle;
@@ -647,7 +651,7 @@ otError DBusThreadObject::GetLinkModeHandler(DBusMessageIter &aIter)
     cfg.mNetworkData  = otCfg.mNetworkData;
     cfg.mRxOnWhenIdle = otCfg.mRxOnWhenIdle;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, cfg) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, cfg) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -660,7 +664,7 @@ otError DBusThreadObject::GetDeviceRoleHandler(DBusMessageIter &aIter)
     std::string  roleName     = GetDeviceRoleName(role);
     otError      error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, roleName) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, roleName) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -672,7 +676,7 @@ otError DBusThreadObject::GetNetworkNameHandler(DBusMessageIter &aIter)
     std::string networkName  = otThreadGetNetworkName(threadHelper->GetInstance());
     otError     error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkName) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkName) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -684,7 +688,7 @@ otError DBusThreadObject::GetPanIdHandler(DBusMessageIter &aIter)
     uint16_t panId        = otLinkGetPanId(threadHelper->GetInstance());
     otError  error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, panId) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, panId) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -699,7 +703,7 @@ otError DBusThreadObject::GetExtPanIdHandler(DBusMessageIter &aIter)
 
     extPanIdVal = ConvertOpenThreadUint64(extPanId->m8);
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, extPanIdVal) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, extPanIdVal) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -711,7 +715,7 @@ otError DBusThreadObject::GetChannelHandler(DBusMessageIter &aIter)
     uint16_t channel      = otLinkGetChannel(threadHelper->GetInstance());
     otError  error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, channel) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, channel) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -725,7 +729,7 @@ otError DBusThreadObject::GetNetworkKeyHandler(DBusMessageIter &aIter)
 
     otThreadGetNetworkKey(threadHelper->GetInstance(), &networkKey);
     std::vector<uint8_t> keyVal(networkKey.m8, networkKey.m8 + sizeof(networkKey.m8));
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, keyVal) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, keyVal) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -737,7 +741,7 @@ otError DBusThreadObject::GetCcaFailureRateHandler(DBusMessageIter &aIter)
     uint16_t failureRate  = otLinkGetCcaFailureRate(threadHelper->GetInstance());
     otError  error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, failureRate) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, failureRate) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -783,7 +787,7 @@ otError DBusThreadObject::GetLinkCountersHandler(DBusMessageIter &aIter)
     counters.mRxErrFcs             = otCounters->mRxErrFcs;
     counters.mRxErrOther           = otCounters->mRxErrOther;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -801,7 +805,7 @@ otError DBusThreadObject::GetIp6CountersHandler(DBusMessageIter &aIter)
     counters.mRxSuccess = otCounters->mRxSuccess;
     counters.mRxFailure = otCounters->mRxFailure;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -813,7 +817,7 @@ otError DBusThreadObject::GetSupportedChannelMaskHandler(DBusMessageIter &aIter)
     uint32_t channelMask  = otLinkGetSupportedChannelMask(threadHelper->GetInstance());
     otError  error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, channelMask) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, channelMask) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -825,7 +829,7 @@ otError DBusThreadObject::GetPreferredChannelMaskHandler(DBusMessageIter &aIter)
     uint32_t channelMask  = otPlatRadioGetPreferredChannelMask(threadHelper->GetInstance());
     otError  error        = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, channelMask) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, channelMask) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -837,7 +841,7 @@ otError DBusThreadObject::GetRloc16Handler(DBusMessageIter &aIter)
     otError  error        = OT_ERROR_NONE;
     uint16_t rloc16       = otThreadGetRloc16(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, rloc16) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, rloc16) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -850,7 +854,8 @@ otError DBusThreadObject::GetExtendedAddressHandler(DBusMessageIter &aIter)
     const otExtAddress *addr            = otLinkGetExtendedAddress(threadHelper->GetInstance());
     uint64_t            extendedAddress = ConvertOpenThreadUint64(addr->m8);
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, extendedAddress) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, extendedAddress) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -863,9 +868,10 @@ otError DBusThreadObject::GetRouterIdHandler(DBusMessageIter &aIter)
     uint16_t     rloc16       = otThreadGetRloc16(threadHelper->GetInstance());
     otRouterInfo info;
 
-    VerifyOrExit(otThreadGetRouterInfo(threadHelper->GetInstance(), rloc16, &info) == OT_ERROR_NONE,
-                 error = OT_ERROR_INVALID_STATE);
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, info.mRouterId) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(otThreadGetRouterInfo(threadHelper->GetInstance(), rloc16, &info) == OT_ERROR_NONE,
+                     error = OT_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, info.mRouterId) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -878,13 +884,13 @@ otError DBusThreadObject::GetLeaderDataHandler(DBusMessageIter &aIter)
     struct otLeaderData data;
     LeaderData          leaderData;
 
-    SuccessOrExit(error = otThreadGetLeaderData(threadHelper->GetInstance(), &data));
+    otbrSuccessOrExit(error = otThreadGetLeaderData(threadHelper->GetInstance(), &data));
     leaderData.mPartitionId       = data.mPartitionId;
     leaderData.mWeighting         = data.mWeighting;
     leaderData.mDataVersion       = data.mDataVersion;
     leaderData.mStableDataVersion = data.mStableDataVersion;
     leaderData.mLeaderRouterId    = data.mLeaderRouterId;
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, leaderData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, leaderData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -899,9 +905,9 @@ otError DBusThreadObject::GetNetworkDataHandler(DBusMessageIter &aIter)
     uint8_t                 len = sizeof(data);
     std::vector<uint8_t>    networkData;
 
-    SuccessOrExit(error = otNetDataGet(threadHelper->GetInstance(), /*stable=*/false, data, &len));
+    otbrSuccessOrExit(error = otNetDataGet(threadHelper->GetInstance(), /*stable=*/false, data, &len));
     networkData = std::vector<uint8_t>(&data[0], &data[len]);
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -916,9 +922,9 @@ otError DBusThreadObject::GetStableNetworkDataHandler(DBusMessageIter &aIter)
     uint8_t                 len = sizeof(data);
     std::vector<uint8_t>    networkData;
 
-    SuccessOrExit(error = otNetDataGet(threadHelper->GetInstance(), /*stable=*/true, data, &len));
+    otbrSuccessOrExit(error = otNetDataGet(threadHelper->GetInstance(), /*stable=*/true, data, &len));
     networkData = std::vector<uint8_t>(&data[0], &data[len]);
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, networkData) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -930,7 +936,7 @@ otError DBusThreadObject::GetLocalLeaderWeightHandler(DBusMessageIter &aIter)
     otError error        = OT_ERROR_NONE;
     uint8_t weight       = otThreadGetLocalLeaderWeight(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, weight) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, weight) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -943,7 +949,7 @@ otError DBusThreadObject::GetChannelMonitorSampleCountHandler(DBusMessageIter &a
     otError  error        = OT_ERROR_NONE;
     uint32_t cnt          = otChannelMonitorGetSampleCount(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, cnt) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, cnt) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -972,7 +978,7 @@ otError DBusThreadObject::GetChannelMonitorAllChannelQualities(DBusMessageIter &
         }
     }
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, quality) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, quality) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1012,7 +1018,7 @@ otError DBusThreadObject::GetChildTableHandler(DBusMessageIter &aIter)
         childIndex++;
     }
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, childTable) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, childTable) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1048,7 +1054,8 @@ otError DBusThreadObject::GetNeighborTableHandler(DBusMessageIter &aIter)
         neighborTable.push_back(info);
     }
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, neighborTable) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, neighborTable) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1060,7 +1067,7 @@ otError DBusThreadObject::GetPartitionIDHandler(DBusMessageIter &aIter)
     otError  error        = OT_ERROR_NONE;
     uint32_t partitionId  = otThreadGetPartitionId(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, partitionId) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, partitionId) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1072,7 +1079,7 @@ otError DBusThreadObject::GetInstantRssiHandler(DBusMessageIter &aIter)
     otError error        = OT_ERROR_NONE;
     int8_t  rssi         = otPlatRadioGetRssi(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, rssi) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, rssi) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1084,9 +1091,9 @@ otError DBusThreadObject::GetRadioTxPowerHandler(DBusMessageIter &aIter)
     otError error        = OT_ERROR_NONE;
     int8_t  txPower;
 
-    SuccessOrExit(error = otPlatRadioGetTransmitPower(threadHelper->GetInstance(), &txPower));
+    otbrSuccessOrExit(error = otPlatRadioGetTransmitPower(threadHelper->GetInstance(), &txPower));
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, txPower) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, txPower) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1114,8 +1121,8 @@ otError DBusThreadObject::GetExternalRoutesHandler(DBusMessageIter &aIter)
         externalRouteTable.push_back(route);
     }
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, externalRouteTable) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, externalRouteTable) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1149,7 +1156,8 @@ otError DBusThreadObject::GetOnMeshPrefixesHandler(DBusMessageIter &aIter)
         prefix.mDp             = config.mDp;
         onMeshPrefixes.push_back(prefix);
     }
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, onMeshPrefixes) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, onMeshPrefixes) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1162,8 +1170,8 @@ otError DBusThreadObject::SetActiveDatasetTlvsHandler(DBusMessageIter &aIter)
     otOperationalDatasetTlvs datasetTlvs;
     otError                  error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(data.size() <= sizeof(datasetTlvs.mTlvs));
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(data.size() <= sizeof(datasetTlvs.mTlvs));
     std::copy(std::begin(data), std::end(data), std::begin(datasetTlvs.mTlvs));
     datasetTlvs.mLength = data.size();
     error               = otDatasetSetActiveTlvs(threadHelper->GetInstance(), &datasetTlvs);
@@ -1179,10 +1187,10 @@ otError DBusThreadObject::GetActiveDatasetTlvsHandler(DBusMessageIter &aIter)
     std::vector<uint8_t>     data;
     otOperationalDatasetTlvs datasetTlvs;
 
-    SuccessOrExit(error = otDatasetGetActiveTlvs(threadHelper->GetInstance(), &datasetTlvs));
+    otbrSuccessOrExit(error = otDatasetGetActiveTlvs(threadHelper->GetInstance(), &datasetTlvs));
     data = std::vector<uint8_t>{std::begin(datasetTlvs.mTlvs), std::begin(datasetTlvs.mTlvs) + datasetTlvs.mLength};
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1195,10 +1203,10 @@ otError DBusThreadObject::GetPendingDatasetTlvsHandler(DBusMessageIter &aIter)
     std::vector<uint8_t>     data;
     otOperationalDatasetTlvs datasetTlvs;
 
-    SuccessOrExit(error = otDatasetGetPendingTlvs(threadHelper->GetInstance(), &datasetTlvs));
+    otbrSuccessOrExit(error = otDatasetGetPendingTlvs(threadHelper->GetInstance(), &datasetTlvs));
     data = std::vector<uint8_t>{std::begin(datasetTlvs.mTlvs), std::begin(datasetTlvs.mTlvs) + datasetTlvs.mLength};
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1211,9 +1219,10 @@ otError DBusThreadObject::SetFeatureFlagListDataHandler(DBusMessageIter &aIter)
     std::vector<uint8_t> data;
     FeatureFlagList      featureFlagList;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(featureFlagList.ParseFromString(std::string(data.begin(), data.end())), error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit((error = mNcp->ApplyFeatureFlagList(featureFlagList)) == OT_ERROR_NONE);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(featureFlagList.ParseFromString(std::string(data.begin(), data.end())),
+                     error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit((error = mNcp->ApplyFeatureFlagList(featureFlagList)) == OT_ERROR_NONE);
 exit:
     return error;
 #else
@@ -1229,7 +1238,7 @@ otError DBusThreadObject::GetFeatureFlagListDataHandler(DBusMessageIter &aIter)
     const std::string    appliedFeatureFlagListBytes = mNcp->GetAppliedFeatureFlagListBytes();
     std::vector<uint8_t> data(appliedFeatureFlagListBytes.begin(), appliedFeatureFlagListBytes.end());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1246,8 +1255,9 @@ otError DBusThreadObject::SetRadioRegionHandler(DBusMessageIter &aIter)
     uint16_t    regionCode;
     otError     error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, radioRegion) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(radioRegion.size() == sizeof(uint16_t), error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, radioRegion) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(radioRegion.size() == sizeof(uint16_t), error = OT_ERROR_INVALID_ARGS);
     regionCode = radioRegion[0] << 8 | radioRegion[1];
 
     error = otPlatRadioSetRegion(threadHelper->GetInstance(), regionCode);
@@ -1264,14 +1274,15 @@ void DBusThreadObject::UpdateMeshCopTxtHandler(DBusRequest &aRequest)
     std::vector<TxtEntry>                       updatedTxtEntries;
     auto                                        args = std::tie(updatedTxtEntries);
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
     for (const auto &entry : updatedTxtEntries)
     {
         update[entry.mKey] = entry.mValue;
     }
     for (const auto reservedKey : {"rv", "tv", "sb", "nn", "xp", "at", "pt", "dn", "sq", "bb", "omr"})
     {
-        VerifyOrExit(!update.count(reservedKey), error = OT_ERROR_INVALID_ARGS);
+        otbrVerifyOrExit(!update.count(reservedKey), error = OT_ERROR_INVALID_ARGS);
     }
     threadHelper->OnUpdateMeshCopTxt(std::move(update));
 
@@ -1286,12 +1297,12 @@ otError DBusThreadObject::GetRadioRegionHandler(DBusMessageIter &aIter)
     std::string radioRegion;
     uint16_t    regionCode;
 
-    SuccessOrExit(error = otPlatRadioGetRegion(threadHelper->GetInstance(), &regionCode));
+    otbrSuccessOrExit(error = otPlatRadioGetRegion(threadHelper->GetInstance(), &regionCode));
     radioRegion.resize(sizeof(uint16_t), '\0');
     radioRegion[0] = static_cast<char>((regionCode >> 8) & 0xff);
     radioRegion[1] = static_cast<char>(regionCode & 0xff);
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioRegion) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioRegion) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1355,7 +1366,8 @@ otError DBusThreadObject::GetSrpServerInfoHandler(DBusMessageIter &aIter)
     srpServerInfo.mResponseCounters.mRefused       = responseCounters->mRefused;
     srpServerInfo.mResponseCounters.mOther         = responseCounters->mOther;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, srpServerInfo) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, srpServerInfo) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1370,8 +1382,8 @@ otError DBusThreadObject::GetMdnsTelemetryInfoHandler(DBusMessageIter &aIter)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, mPublisher->GetMdnsTelemetryInfo()) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, mPublisher->GetMdnsTelemetryInfo()) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 exit:
     return error;
 }
@@ -1394,7 +1406,8 @@ otError DBusThreadObject::GetDnssdCountersHandler(DBusMessageIter &aIter)
 
     dnssdCounters.mResolvedBySrp = otDnssdCounters.mResolvedBySrp;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, dnssdCounters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, dnssdCounters) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1421,7 +1434,7 @@ otError DBusThreadObject::GetTelemetryDataHandler(DBusMessageIter &aIter)
         const std::string    telemetryDataBytes = telemetryData.SerializeAsString();
         std::vector<uint8_t> data(telemetryDataBytes.begin(), telemetryDataBytes.end());
 
-        VerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+        otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
     }
 
 exit:
@@ -1443,7 +1456,7 @@ otError DBusThreadObject::GetCapabilitiesHandler(DBusMessageIter &aIter)
         const std::string    dataBytes = capabilities.SerializeAsString();
         std::vector<uint8_t> data(dataBytes.begin(), dataBytes.end());
 
-        VerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+        otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, data) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
     }
 
 exit:
@@ -1459,12 +1472,12 @@ void DBusThreadObject::GetPropertiesHandler(DBusRequest &aRequest)
     std::vector<std::string> propertyNames;
     otError                  error = OT_ERROR_NONE;
 
-    VerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
-    VerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
-    VerifyOrExit(DBusMessageExtract(&iter, propertyNames) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
+    otbrVerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageExtract(&iter, propertyNames) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
 
     dbus_message_iter_init_append(reply.get(), &replyIter);
-    VerifyOrExit(
+    otbrVerifyOrExit(
         dbus_message_iter_open_container(&replyIter, DBUS_TYPE_ARRAY, DBUS_TYPE_VARIANT_AS_STRING, &replySubIter),
         error = OT_ERROR_NO_BUFS);
 
@@ -1473,12 +1486,12 @@ void DBusThreadObject::GetPropertiesHandler(DBusRequest &aRequest)
         auto handlerIter = mGetPropertyHandlers.find(propertyName);
 
         otbrLogInfo("GetPropertiesHandler getting property: %s", propertyName.c_str());
-        VerifyOrExit(handlerIter != mGetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
+        otbrVerifyOrExit(handlerIter != mGetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
 
-        SuccessOrExit(error = handlerIter->second(replySubIter));
+        otbrSuccessOrExit(error = handlerIter->second(replySubIter));
     }
 
-    VerifyOrExit(dbus_message_iter_close_container(&replyIter, &replySubIter), error = OT_ERROR_NO_BUFS);
+    otbrVerifyOrExit(dbus_message_iter_close_container(&replyIter, &replySubIter), error = OT_ERROR_NO_BUFS);
 
 exit:
     if (error == OT_ERROR_NONE)
@@ -1504,7 +1517,7 @@ otError DBusThreadObject::GetOtHostVersionHandler(DBusMessageIter &aIter)
     otError     error   = OT_ERROR_NONE;
     std::string version = otGetVersionString();
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, version) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, version) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
 
 exit:
     return error;
@@ -1521,7 +1534,7 @@ otError DBusThreadObject::GetEui64Handler(DBusMessageIter &aIter)
 
     eui64 = ConvertOpenThreadUint64(extAddr.m8);
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, eui64) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, eui64) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1533,7 +1546,7 @@ otError DBusThreadObject::GetOtRcpVersionHandler(DBusMessageIter &aIter)
     otError     error        = OT_ERROR_NONE;
     std::string version      = otGetRadioVersionString(threadHelper->GetInstance());
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, version) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, version) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
 
 exit:
     return error;
@@ -1543,7 +1556,8 @@ otError DBusThreadObject::GetThreadVersionHandler(DBusMessageIter &aIter)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, otThreadGetVersion()) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, otThreadGetVersion()) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_FAILED);
 
 exit:
     return error;
@@ -1560,8 +1574,8 @@ otError DBusThreadObject::GetRadioSpinelMetricsHandler(DBusMessageIter &aIter)
     radioSpinelMetrics.mRcpRestorationCount     = otRadioSpinelMetrics.mRcpRestorationCount;
     radioSpinelMetrics.mSpinelParseErrorCount   = otRadioSpinelMetrics.mSpinelParseErrorCount;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioSpinelMetrics) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioSpinelMetrics) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1582,8 +1596,8 @@ otError DBusThreadObject::GetRcpInterfaceMetricsHandler(DBusMessageIter &aIter)
     rcpInterfaceMetrics.mTxFrameCount                 = otRcpInterfaceMetrics.mTxFrameCount;
     rcpInterfaceMetrics.mTxFrameByteCount             = otRcpInterfaceMetrics.mTxFrameByteCount;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, rcpInterfaceMetrics) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, rcpInterfaceMetrics) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1593,9 +1607,9 @@ otError DBusThreadObject::GetUptimeHandler(DBusMessageIter &aIter)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, otInstanceGetUptime(mNcp->GetThreadHelper()->GetInstance())) ==
-                     OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, otInstanceGetUptime(mNcp->GetThreadHelper()->GetInstance())) ==
+                         OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1607,7 +1621,7 @@ otError DBusThreadObject::GetRadioCoexMetrics(DBusMessageIter &aIter)
     otRadioCoexMetrics otRadioCoexMetrics;
     RadioCoexMetrics   radioCoexMetrics;
 
-    SuccessOrExit(error = otPlatRadioGetCoexMetrics(mNcp->GetInstance(), &otRadioCoexMetrics));
+    otbrSuccessOrExit(error = otPlatRadioGetCoexMetrics(mNcp->GetInstance(), &otRadioCoexMetrics));
 
     radioCoexMetrics.mNumGrantGlitch                     = otRadioCoexMetrics.mNumGrantGlitch;
     radioCoexMetrics.mNumTxRequest                       = otRadioCoexMetrics.mNumTxRequest;
@@ -1629,8 +1643,8 @@ otError DBusThreadObject::GetRadioCoexMetrics(DBusMessageIter &aIter)
     radioCoexMetrics.mNumRxGrantNone                     = otRadioCoexMetrics.mNumRxGrantNone;
     radioCoexMetrics.mStopped                            = otRadioCoexMetrics.mStopped;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioCoexMetrics) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, radioCoexMetrics) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1660,8 +1674,8 @@ otError DBusThreadObject::GetBorderRoutingCountersHandler(DBusMessageIter &aIter
     borderRoutingCounters.mRsTxSuccess                = otBorderRoutingCounters->mRsTxSuccess;
     borderRoutingCounters.mRsTxFailure                = otBorderRoutingCounters->mRsTxFailure;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, borderRoutingCounters) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, borderRoutingCounters) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1684,9 +1698,9 @@ void DBusThreadObject::LeaveNetworkHandler(DBusRequest &aRequest)
     constexpr int kExitCodeShouldRestart = 7;
 
     mNcp->GetThreadHelper()->DetachGracefully([aRequest, this](otError error) mutable {
-        SuccessOrExit(error);
+        otbrSuccessOrExit(error);
         mPublisher->Stop();
-        SuccessOrExit(error = otInstanceErasePersistentInfo(mNcp->GetThreadHelper()->GetInstance()));
+        otbrSuccessOrExit(error = otInstanceErasePersistentInfo(mNcp->GetThreadHelper()->GetInstance()));
 
     exit:
         aRequest.ReplyOtResult(error);
@@ -1705,7 +1719,8 @@ void DBusThreadObject::SetNat64Enabled(DBusRequest &aRequest)
     bool    enable;
     auto    args = std::tie(enable);
 
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
     otNat64SetEnabled(mNcp->GetThreadHelper()->GetInstance(), enable);
 
 exit:
@@ -1721,7 +1736,7 @@ otError DBusThreadObject::GetNat64State(DBusMessageIter &aIter)
     state.mPrefixManagerState = GetNat64StateName(otNat64GetPrefixManagerState(mNcp->GetThreadHelper()->GetInstance()));
     state.mTranslatorState    = GetNat64StateName(otNat64GetTranslatorState(mNcp->GetThreadHelper()->GetInstance()));
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, state) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, state) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1767,7 +1782,7 @@ otError DBusThreadObject::GetNat64Mappings(DBusMessageIter &aIter)
         mappings.push_back(mapping);
     }
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, mappings) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, mappings) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1798,7 +1813,7 @@ otError DBusThreadObject::GetNat64ProtocolCounters(DBusMessageIter &aIter)
     counters.mTcp.m6To4Packets   = otCounters.mTcp.m6To4Packets;
     counters.mTcp.m6To4Bytes     = otCounters.mTcp.m6To4Bytes;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1821,7 +1836,7 @@ otError DBusThreadObject::GetNat64ErrorCounters(DBusMessageIter &aIter)
     counters.mNoMapping.m4To6Packets        = otCounters.mCount4To6[OT_NAT64_DROP_REASON_NO_MAPPING];
     counters.mNoMapping.m6To4Packets        = otCounters.mCount6To4[OT_NAT64_DROP_REASON_NO_MAPPING];
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, counters) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1837,8 +1852,8 @@ otError DBusThreadObject::GetNat64Cidr(DBusMessageIter &aIter)
     otNat64GetCidr(mNcp->GetThreadHelper()->GetInstance(), &cidr);
     otIp4CidrToString(&cidr, cidrString, sizeof(cidrString));
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, std::string(cidrString)) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, std::string(cidrString)) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1850,9 +1865,10 @@ otError DBusThreadObject::SetNat64Cidr(DBusMessageIter &aIter)
     std::string cidrString;
     otIp4Cidr   cidr;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, cidrString) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, cidrString) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
     otIp4CidrFromString(cidrString.c_str(), &cidr);
-    SuccessOrExit(error = otNat64SetIp4Cidr(mNcp->GetThreadHelper()->GetInstance(), &cidr));
+    otbrSuccessOrExit(error = otNat64SetIp4Cidr(mNcp->GetThreadHelper()->GetInstance(), &cidr));
 
 exit:
     return error;
@@ -1920,7 +1936,8 @@ otError DBusThreadObject::GetInfraLinkInfo(DBusMessageIter &aIter)
     infraLinkInfo.mUniqueLocalAddresses   = addressCounters.mUniqueLocalAddresses;
     infraLinkInfo.mGlobalUnicastAddresses = addressCounters.mGlobalUnicastAddresses;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(&aIter, infraLinkInfo) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, infraLinkInfo) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;
@@ -1937,7 +1954,7 @@ otError DBusThreadObject::SetDnsUpstreamQueryState(DBusMessageIter &aIter)
     otError error = OT_ERROR_NONE;
     bool    enable;
 
-    VerifyOrExit(DBusMessageExtractFromVariant(&aIter, enable) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageExtractFromVariant(&aIter, enable) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
     otDnssdUpstreamQuerySetEnabled(mNcp->GetThreadHelper()->GetInstance(), enable);
 
 exit:
@@ -1954,9 +1971,9 @@ otError DBusThreadObject::GetDnsUpstreamQueryState(DBusMessageIter &aIter)
 #if OTBR_ENABLE_DNS_UPSTREAM_QUERY
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(DBusMessageEncodeToVariant(
-                     &aIter, otDnssdUpstreamQueryIsEnabled(mNcp->GetThreadHelper()->GetInstance())) == OTBR_ERROR_NONE,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(DBusMessageEncodeToVariant(&aIter, otDnssdUpstreamQueryIsEnabled(
+                                                            mNcp->GetThreadHelper()->GetInstance())) == OTBR_ERROR_NONE,
+                     error = OT_ERROR_INVALID_ARGS);
 
 exit:
     return error;

@@ -64,15 +64,9 @@ Connection::Connection(steady_clock::time_point aStartTime, Resource *aResource,
 {
 }
 
-Connection::~Connection(void)
-{
-    Disconnect();
-}
+Connection::~Connection(void) { Disconnect(); }
 
-void Connection::Init(void)
-{
-    mParser.Init();
-}
+void Connection::Init(void) { mParser.Init(); }
 
 void Connection::UpdateReadFdSet(fd_set &aReadFdSet, int &aMaxFd) const
 {
@@ -187,10 +181,10 @@ void Connection::ProcessWaitRead(const fd_set &aReadFdSet)
     auto      duration = duration_cast<microseconds>(steady_clock::now() - mTimeStamp).count();
 
     // Reach a read timeout, will send response about this timeout later.
-    VerifyOrExit(duration <= kReadTimeout, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(duration <= kReadTimeout, error = OTBR_ERROR_REST);
 
     // It will succeed either fd is set or it is in kInit state.
-    VerifyOrExit(FD_ISSET(mFd, &aReadFdSet) || mState == ConnectionState::kInit);
+    otbrVerifyOrExit(FD_ISSET(mFd, &aReadFdSet) || mState == ConnectionState::kInit);
 
     do
     {
@@ -210,11 +204,12 @@ void Connection::ProcessWaitRead(const fd_set &aReadFdSet)
 
     // Check first failure situation: received == 0 (indicate another side at least has closes its write side )
     // and at the same time, the request has not been parsed completely.
-    VerifyOrExit(received != 0 || mRequest.IsComplete(), error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(received != 0 || mRequest.IsComplete(), error = OTBR_ERROR_REST);
 
     // Check second  failure situation : received = -1 error(indicates that our system call read raise an error )
     // then try to send back a response that there is an internal error.
-    VerifyOrExit(received > 0 || (received == -1 && (err == EAGAIN || err == EWOULDBLOCK)), error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(received > 0 || (received == -1 && (err == EAGAIN || err == EWOULDBLOCK)),
+                     error = OTBR_ERROR_REST);
 
 exit:
     if (error != OTBR_ERROR_NONE)
@@ -238,7 +233,7 @@ void Connection::Handle(void)
 
     // Try to close server read side here, because we have started to handle the request and no longler read from
     // socket.
-    VerifyOrExit((shutdown(mFd, SHUT_RD) == 0), error = OTBR_ERROR_REST);
+    otbrVerifyOrExit((shutdown(mFd, SHUT_RD) == 0), error = OTBR_ERROR_REST);
 
     mResource->Handle(mRequest, mResponse);
 
@@ -315,7 +310,7 @@ void Connection::Write(void)
     }
 
     // Check we do have something to write.
-    VerifyOrExit(mWriteContent.size() > 0, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(mWriteContent.size() > 0, error = OTBR_ERROR_REST);
 
     sendLength = write(mFd, mWriteContent.c_str(), mWriteContent.size());
     err        = errno;
@@ -341,7 +336,7 @@ void Connection::Write(void)
         else
         {
             // There is an error when we write, if this, we directly disconnect this connection.
-            VerifyOrExit(err == EAGAIN || err == EWOULDBLOCK, error = OTBR_ERROR_REST);
+            otbrVerifyOrExit(err == EAGAIN || err == EWOULDBLOCK, error = OTBR_ERROR_REST);
         }
     }
 
@@ -352,10 +347,7 @@ exit:
     }
 }
 
-bool Connection::IsComplete() const
-{
-    return mState == ConnectionState::kComplete;
-}
+bool Connection::IsComplete() const { return mState == ConnectionState::kComplete; }
 
 } // namespace rest
 } // namespace otbr

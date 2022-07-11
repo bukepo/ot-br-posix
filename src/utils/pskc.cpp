@@ -33,7 +33,7 @@
 
 #include "utils/pskc.hpp"
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 namespace otbr {
@@ -59,7 +59,7 @@ void Pskc::SetSalt(const uint8_t *aExtPanId, const char *aNetworkName)
     memcpy(mSalt + cur, aExtPanId, OT_EXTENDED_PAN_ID_LENGTH);
     cur += OT_EXTENDED_PAN_ID_LENGTH;
 
-    VerifyOrExit(strlen(aNetworkName) > 0, ret = kPskcStatus_InvalidArgument);
+    otbrVerifyOrExit(strlen(aNetworkName) > 0, ret = kPskcStatus_InvalidArgument);
 
     remainingSpace = sizeof(mSalt) - cur;
     if (remainingSpace > 0)

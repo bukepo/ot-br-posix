@@ -54,8 +54,7 @@ target_link_libraries(ot-cli PRIVATE
     openthread-spinel-rcp
     ${OT_MBEDTLS}
     ${READLINE_LINK_LIBRARIES}
-    ot-config-ftd
-    ot-config
+    otbr-config
 )
 
 if(OT_LINKER_MAP)

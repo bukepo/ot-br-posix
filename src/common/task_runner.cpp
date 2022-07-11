@@ -38,7 +38,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 
@@ -48,12 +48,12 @@ TaskRunner::TaskRunner(void)
     int flags;
 
     // We do not handle failures when creating a pipe, simply die.
-    VerifyOrDie(pipe(mEventFd) != -1, strerror(errno));
+    otbrVerifyOrDie(pipe(mEventFd) != -1, strerror(errno));
 
     flags = fcntl(mEventFd[kRead], F_GETFL, 0);
-    VerifyOrDie(fcntl(mEventFd[kRead], F_SETFL, flags | O_NONBLOCK) != -1, strerror(errno));
+    otbrVerifyOrDie(fcntl(mEventFd[kRead], F_SETFL, flags | O_NONBLOCK) != -1, strerror(errno));
     flags = fcntl(mEventFd[kWrite], F_GETFL, 0);
-    VerifyOrDie(fcntl(mEventFd[kWrite], F_SETFL, flags | O_NONBLOCK) != -1, strerror(errno));
+    otbrVerifyOrDie(fcntl(mEventFd[kWrite], F_SETFL, flags | O_NONBLOCK) != -1, strerror(errno));
 }
 
 TaskRunner::~TaskRunner(void)
@@ -70,10 +70,7 @@ TaskRunner::~TaskRunner(void)
     }
 }
 
-void TaskRunner::Post(Task<void> aTask)
-{
-    Post(Milliseconds::zero(), std::move(aTask));
-}
+void TaskRunner::Post(Task<void> aTask) { Post(Milliseconds::zero(), std::move(aTask)); }
 
 TaskRunner::TaskId TaskRunner::Post(Milliseconds aDelay, Task<void> aTask)
 {
@@ -124,7 +121,7 @@ void TaskRunner::Process(const MainloopContext &aMainloop)
     } while (rval > 0 || (rval == -1 && errno == EINTR));
 
     // Critical error happens, simply die.
-    VerifyOrDie(errno == EAGAIN || errno == EWOULDBLOCK, strerror(errno));
+    otbrVerifyOrDie(errno == EAGAIN || errno == EWOULDBLOCK, strerror(errno));
 
     PopTasks();
 }
@@ -149,10 +146,10 @@ TaskRunner::TaskId TaskRunner::PushTask(Milliseconds aDelay, Task<void> aTask)
         rval = write(mEventFd[kWrite], &kOne, sizeof(kOne));
     } while (rval == -1 && errno == EINTR);
 
-    VerifyOrExit(rval == -1);
+    otbrVerifyOrExit(rval == -1);
 
     // Critical error happens, simply die.
-    VerifyOrDie(errno == EAGAIN || errno == EWOULDBLOCK, strerror(errno));
+    otbrVerifyOrDie(errno == EAGAIN || errno == EWOULDBLOCK, strerror(errno));
 
     // We are blocked because there are already data (written by other concurrent callers in
     // different threads) in the pipe, and the mEventFd[kRead] should be readable now.

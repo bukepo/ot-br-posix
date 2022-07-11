@@ -40,30 +40,26 @@ target_link_libraries(otbr-agent PRIVATE
     $<$<BOOL:${OTBR_MDNS}>:otbr-mdns>
     $<$<BOOL:${OTBR_OPENWRT}>:otbr-ubus>
     $<$<BOOL:${OTBR_REST}>:otbr-rest>
-    openthread-posix
-    openthread-cli-ftd
-    openthread-ftd
-    openthread-spinel-rcp
-    openthread-radio-spinel
-    openthread-hdlc
     otbr-sdp-proxy
     otbr-ncp
     otbr-common
     otbr-utils
+    openthread-cli-ftd
+    openthread-posix
+    openthread-ftd
+    openthread-hdlc
+    openthread-spinel-rcp
+    openthread-radio-spinel
+    openthread-posix
+    openthread-cli-ftd
 )
 
-add_dependencies(otbr-agent ot-ctl print-ot-config otbr-sdp-proxy otbr-utils otbr-ncp)
+add_dependencies(otbr-agent print-ot-config otbr-sdp-proxy otbr-utils otbr-ncp)
 if (OTBR_BORDER_AGENT)
     add_dependencies(otbr-agent otbr-border-agent)
 endif()
 
 install(TARGETS otbr-agent DESTINATION sbin)
-
-if(CMAKE_VERSION VERSION_LESS 3.13)
-    install(PROGRAMS $<TARGET_FILE:ot-ctl> DESTINATION sbin)
-else()
-    install(TARGETS ot-ctl DESTINATION sbin)
-endif()
 
 set(OTBR_AGENT_USER "root" CACHE STRING "set the username running otbr-agent service")
 set(OTBR_AGENT_GROUP "root" CACHE STRING "set the group using otbr-agent client")

@@ -45,10 +45,10 @@
 
 #include <openthread/backbone_router_ftd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/mainloop.hpp"
 #include "common/task_runner.hpp"
-#include "common/time.hpp"
+#include "common/time_utils.hpp"
 
 #if OTBR_ENABLE_VENDOR_INFRA_LINK_SELECT
 /**

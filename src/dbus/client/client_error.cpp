@@ -28,7 +28,7 @@
 
 #include "client_error.hpp"
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "dbus/common/dbus_message_helper.hpp"
 
 #define OTBR_OPENTHREAD_ERROR_PREFIX "io.openthread.Error"
@@ -104,7 +104,7 @@ ClientError CheckErrorMessage(DBusMessage *aMessage)
         }
         else
         {
-            VerifyOrExit(DBusMessageToTuple(*aMessage, args) == OTBR_ERROR_NONE, error = ClientError::ERROR_DBUS);
+            otbrVerifyOrExit(DBusMessageToTuple(*aMessage, args) == OTBR_ERROR_NONE, error = ClientError::ERROR_DBUS);
             error = ConvertFromDBusErrorName(errorMsg);
         }
     }

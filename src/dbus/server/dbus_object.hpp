@@ -47,7 +47,7 @@
 
 #include <dbus/dbus.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/types.hpp"
 #include "dbus/common/constants.hpp"
 #include "dbus/common/dbus_message_dump.hpp"
@@ -144,10 +144,10 @@ public:
         UniqueDBusMessage signalMsg = NewSignalMessage(aInterfaceName, aSignalName);
         otbrError         error     = OTBR_ERROR_NONE;
 
-        VerifyOrExit(signalMsg != nullptr, error = OTBR_ERROR_DBUS);
-        SuccessOrExit(error = otbr::DBus::TupleToDBusMessage(*signalMsg, aArgs));
+        otbrVerifyOrExit(signalMsg != nullptr, error = OTBR_ERROR_DBUS);
+        otbrSuccessOrExit(error = otbr::DBus::TupleToDBusMessage(*signalMsg, aArgs));
 
-        VerifyOrExit(dbus_connection_send(mConnection, signalMsg.get(), nullptr), error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(dbus_connection_send(mConnection, signalMsg.get(), nullptr), error = OTBR_ERROR_DBUS);
 
     exit:
         return error;
@@ -173,28 +173,28 @@ public:
         DBusMessageIter   iter, subIter, dictEntryIter;
         otbrError         error = OTBR_ERROR_NONE;
 
-        VerifyOrExit(signalMsg != nullptr, error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(signalMsg != nullptr, error = OTBR_ERROR_DBUS);
         dbus_message_iter_init_append(signalMsg.get(), &iter);
 
         // interface_name
-        VerifyOrExit(DBusMessageEncode(&iter, aInterfaceName) == OTBR_ERROR_NONE, error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(DBusMessageEncode(&iter, aInterfaceName) == OTBR_ERROR_NONE, error = OTBR_ERROR_DBUS);
 
         // changed_properties
-        VerifyOrExit(dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-                                                      "{" DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING "}",
-                                                      &subIter),
-                     error = OTBR_ERROR_DBUS);
-        VerifyOrExit(dbus_message_iter_open_container(&subIter, DBUS_TYPE_DICT_ENTRY, nullptr, &dictEntryIter),
-                     error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(
+            dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+                                             "{" DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING "}", &subIter),
+            error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(dbus_message_iter_open_container(&subIter, DBUS_TYPE_DICT_ENTRY, nullptr, &dictEntryIter),
+                         error = OTBR_ERROR_DBUS);
 
-        SuccessOrExit(error = DBusMessageEncode(&dictEntryIter, aPropertyName));
-        SuccessOrExit(error = DBusMessageEncodeToVariant(&dictEntryIter, aValue));
+        otbrSuccessOrExit(error = DBusMessageEncode(&dictEntryIter, aPropertyName));
+        otbrSuccessOrExit(error = DBusMessageEncodeToVariant(&dictEntryIter, aValue));
 
-        VerifyOrExit(dbus_message_iter_close_container(&subIter, &dictEntryIter), error = OTBR_ERROR_DBUS);
-        VerifyOrExit(dbus_message_iter_close_container(&iter, &subIter), error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(dbus_message_iter_close_container(&subIter, &dictEntryIter), error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(dbus_message_iter_close_container(&iter, &subIter), error = OTBR_ERROR_DBUS);
 
         // invalidated_properties
-        SuccessOrExit(error = DBusMessageEncode(&iter, std::vector<std::string>()));
+        otbrSuccessOrExit(error = DBusMessageEncode(&iter, std::vector<std::string>()));
 
         if (otbrLogGetLevel() >= OTBR_LOG_DEBUG)
         {
@@ -202,7 +202,7 @@ public:
             DumpDBusMessage(*signalMsg);
         }
 
-        VerifyOrExit(dbus_connection_send(mConnection, signalMsg.get(), nullptr), error = OTBR_ERROR_DBUS);
+        otbrVerifyOrExit(dbus_connection_send(mConnection, signalMsg.get(), nullptr), error = OTBR_ERROR_DBUS);
 
     exit:
         return error;

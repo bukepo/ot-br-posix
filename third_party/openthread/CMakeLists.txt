@@ -42,7 +42,11 @@ set(OT_CHILD_SUPERVISION ON CACHE STRING "enable child supervision" FORCE)
 set(OT_COAP ON CACHE STRING "Enable CoAP in OpenThread")
 set(OT_COAPS ON CACHE STRING "Enable secure CoAP in OpenThread")
 set(OT_COMMISSIONER ON CACHE STRING "enable commissioner")
-set(OT_DAEMON ON CACHE STRING "enable daemon mode" FORCE)
+if (OTBR_BUILTIN_POSIX_PLATFORM)
+    set(OT_DAEMON OFF CACHE STRING "enable daemon mode" FORCE)
+else()
+    set(OT_DAEMON ON CACHE STRING "enable daemon mode" FORCE)
+endif()
 set(OT_DATASET_UPDATER ON CACHE STRING "enable dataset updater" FORCE)
 set(OT_DNS_CLIENT ON CACHE STRING "enable DNS client" FORCE)
 set(OT_DNS_UPSTREAM_QUERY ${OTBR_DNS_UPSTREAM_QUERY} CACHE STRING "enable sending DNS queries to upstream" FORCE)
@@ -59,7 +63,14 @@ set(OT_NAT64_BORDER_ROUTING ${OTBR_NAT64} CACHE STRING "enable NAT64 in border r
 set(OT_NAT64_TRANSLATOR ${OTBR_NAT64} CACHE STRING "enable NAT64 translator" FORCE)
 set(OT_NETDATA_PUBLISHER ON CACHE STRING "enable netdata publisher" FORCE)
 set(OT_NETDIAG_CLIENT ON CACHE STRING "enable Network Diagnostic client" FORCE)
-set(OT_PLATFORM "posix" CACHE STRING "use posix platform" FORCE)
+if (OTBR_BUILTIN_POSIX_PLATFORM)
+    set(OT_PLATFORM "external" CACHE STRING "use builtin platform" FORCE)
+    if(NOT OT_PROJECT_CONFIG)
+        set(OT_PROJECT_CONFIG "openthread-core-posix-config.h" CACHE STRING "config" FORCE)
+    endif()
+else()
+    set(OT_PLATFORM "posix" CACHE STRING "use posix platform" FORCE)
+endif()
 set(OT_PLATFORM_NETIF ON CACHE STRING "enable platform netif" FORCE)
 set(OT_PLATFORM_UDP ON CACHE STRING "enable platform UDP" FORCE)
 set(OT_SERVICE ON CACHE STRING "enable service" FORCE)
@@ -107,6 +118,9 @@ target_compile_definitions(ot-config INTERFACE
     "-DOPENTHREAD_CONFIG_TCP_ENABLE=0"
     "-DOPENTHREAD_POSIX_CONFIG_FILE=\"${PROJECT_BINARY_DIR}/src/agent/openthread-otbr-posix-config.h\""
 )
+
+target_include_directories(ot-config INTERFACE
+    ${PROJECT_SOURCE_DIR}/src/posix/platform)
 
 if (NOT OT_THREAD_VERSION STREQUAL "1.1")
     target_compile_definitions(ot-config INTERFACE

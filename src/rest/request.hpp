@@ -39,7 +39,7 @@
 #include <map>
 #include <string>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "rest/types.hpp"
 
 namespace otbr {

@@ -33,7 +33,7 @@
 #include <linux/rtnetlink.h>
 #endif
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 int SocketWithCloseExec(int aDomain, int aType, int aProtocol, SocketBlockOption aBlockOption)
 {
@@ -41,20 +41,20 @@ int SocketWithCloseExec(int aDomain, int aType, int aProtocol, SocketBlockOption
     int fd   = -1;
 
 #ifdef __APPLE__
-    VerifyOrExit((fd = socket(aDomain, aType, aProtocol)) != -1, perror("socket(SOCK_CLOEXEC)"));
+    otbrVerifyOrExit((fd = socket(aDomain, aType, aProtocol)) != -1, perror("socket(SOCK_CLOEXEC)"));
 
-    VerifyOrExit((rval = fcntl(fd, F_GETFD, 0)) != -1, perror("fcntl(F_GETFD)"));
+    otbrVerifyOrExit((rval = fcntl(fd, F_GETFD, 0)) != -1, perror("fcntl(F_GETFD)"));
     rval |= aBlockOption == kSocketNonBlock ? O_NONBLOCK | FD_CLOEXEC : FD_CLOEXEC;
-    VerifyOrExit((rval = fcntl(fd, F_SETFD, rval)) != -1, perror("fcntl(F_SETFD)"));
+    otbrVerifyOrExit((rval = fcntl(fd, F_SETFD, rval)) != -1, perror("fcntl(F_SETFD)"));
 #else
     aType |= aBlockOption == kSocketNonBlock ? SOCK_CLOEXEC | SOCK_NONBLOCK : SOCK_CLOEXEC;
-    VerifyOrExit((fd = socket(aDomain, aType, aProtocol)) != -1, perror("socket(SOCK_CLOEXEC)"));
+    otbrVerifyOrExit((fd = socket(aDomain, aType, aProtocol)) != -1, perror("socket(SOCK_CLOEXEC)"));
 #endif
 
 exit:
     if (rval == -1)
     {
-        VerifyOrDie(close(fd) == 0, "close(fd) failed");
+        otbrVerifyOrDie(close(fd) == 0, "close(fd) failed");
         fd = -1;
     }
 
@@ -69,7 +69,7 @@ int CreateNetLinkRouteSocket(uint32_t aNlGroups)
     struct sockaddr_nl addr;
 
     sock = SocketWithCloseExec(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE, kSocketBlock);
-    VerifyOrExit(sock != -1);
+    otbrVerifyOrExit(sock != -1);
 
     memset(&addr, 0, sizeof(addr));
     addr.nl_family = AF_NETLINK;

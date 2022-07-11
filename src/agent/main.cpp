@@ -52,7 +52,7 @@
 #endif
 
 #include "agent/application.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/mainloop.hpp"
 #include "common/types.hpp"
@@ -101,11 +101,11 @@ static bool ParseInteger(const char *aStr, long &aOutResult)
     char *strEnd;
     long  result;
 
-    VerifyOrExit(aStr != nullptr, successful = false);
+    otbrVerifyOrExit(aStr != nullptr, successful = false);
     errno  = 0;
     result = strtol(aStr, &strEnd, 0);
-    VerifyOrExit(errno != ERANGE, successful = false);
-    VerifyOrExit(aStr != strEnd, successful = false);
+    otbrVerifyOrExit(errno != ERANGE, successful = false);
+    otbrVerifyOrExit(aStr != strEnd, successful = false);
 
     aOutResult = result;
 
@@ -141,10 +141,7 @@ static void PrintHelp(const char *aProgramName)
     fprintf(stderr, "%s", otSysGetRadioUrlHelpString());
 }
 
-static void PrintVersion(void)
-{
-    printf("%s\n", OTBR_PACKAGE_VERSION);
-}
+static void PrintVersion(void) { printf("%s\n", OTBR_PACKAGE_VERSION); }
 
 static void OnAllocateFailed(void)
 {
@@ -213,8 +210,8 @@ static int realmain(int argc, char *argv[])
             break;
 
         case OTBR_OPT_DEBUG_LEVEL:
-            VerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
-            VerifyOrExit(OTBR_LOG_EMERG <= parseResult && parseResult <= OTBR_LOG_DEBUG, ret = EXIT_FAILURE);
+            otbrVerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
+            otbrVerifyOrExit(OTBR_LOG_EMERG <= parseResult && parseResult <= OTBR_LOG_DEBUG, ret = EXIT_FAILURE);
             logLevel = static_cast<otbrLogLevel>(parseResult);
             break;
 
@@ -228,12 +225,12 @@ static int realmain(int argc, char *argv[])
 
         case OTBR_OPT_VERSION:
             PrintVersion();
-            ExitNow();
+            otbrExitNow();
             break;
 
         case OTBR_OPT_HELP:
             PrintHelp(argv[0]);
-            ExitNow(ret = EXIT_SUCCESS);
+            otbrExitNow(ret = EXIT_SUCCESS);
             break;
 
         case OTBR_OPT_RADIO_VERSION:
@@ -247,7 +244,7 @@ static int realmain(int argc, char *argv[])
             }
             else
             {
-                VerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
+                otbrVerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
                 enableAutoAttach = parseResult;
             }
             break;
@@ -256,13 +253,13 @@ static int realmain(int argc, char *argv[])
             break;
 
         case OTBR_OPT_REST_LISTEN_PORT:
-            VerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
+            otbrVerifyOrExit(ParseInteger(optarg, parseResult), ret = EXIT_FAILURE);
             restListenPort = parseResult;
             break;
 
         default:
             PrintHelp(argv[0]);
-            ExitNow(ret = EXIT_FAILURE);
+            otbrExitNow(ret = EXIT_FAILURE);
             break;
         }
     }
@@ -313,7 +310,7 @@ void otPlatReset(otInstance *aInstance)
 
     gPlatResetReason = OT_PLAT_RESET_REASON_SOFTWARE;
 
-    VerifyOrDie(gApp != nullptr, "gApp is null");
+    otbrVerifyOrDie(gApp != nullptr, "gApp is null");
     gApp->Deinit();
     gApp = nullptr;
 

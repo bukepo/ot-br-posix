@@ -34,6 +34,7 @@ add_compile_options(-Wall -Wextra -Werror -Wfatal-errors -Wuninitialized -Wno-mi
 add_library(otbr-config INTERFACE)
 
 set(OTBR_INFRA_IF_NAME "wlan0" CACHE STRING "The infrastructure interface name")
+set(OTBR_BUILTIN_POSIX_PLATFORM ON CACHE BOOL "Use built-in POSIX platform")
 set(OTBR_VENDOR_NAME "OpenThread" CACHE STRING "The vendor name")
 set(OTBR_PRODUCT_NAME "BorderRouter" CACHE STRING "The product name")
 set(OTBR_NAME "${OTBR_VENDOR_NAME}_${OTBR_PRODUCT_NAME}" CACHE STRING "The package name")

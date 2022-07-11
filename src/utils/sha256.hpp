@@ -36,7 +36,7 @@
 
 #include <openthread/crypto.h>
 #include <openthread/platform/crypto.h>
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 #include <mbedtls/sha256.h>
 

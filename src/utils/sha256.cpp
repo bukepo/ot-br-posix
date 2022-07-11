@@ -42,7 +42,7 @@ Sha256::Sha256(void)
     mContext.mContext     = &mContextStorage;
     mContext.mContextSize = sizeof(mContextStorage);
 
-    SuccessOrExit(error = otPlatCryptoSha256Init(&mContext));
+    otbrSuccessOrExit(error = otPlatCryptoSha256Init(&mContext));
 
 exit:
     if (error != OT_ERROR_NONE)
@@ -55,7 +55,7 @@ Sha256::~Sha256(void)
 {
     otError error;
 
-    SuccessOrExit(error = otPlatCryptoSha256Deinit(&mContext));
+    otbrSuccessOrExit(error = otPlatCryptoSha256Deinit(&mContext));
 
 exit:
     if (error != OT_ERROR_NONE)
@@ -68,7 +68,7 @@ void Sha256::Start(void)
 {
     otError error;
 
-    SuccessOrExit(error = otPlatCryptoSha256Start(&mContext));
+    otbrSuccessOrExit(error = otPlatCryptoSha256Start(&mContext));
 
 exit:
     if (error != OT_ERROR_NONE)
@@ -81,7 +81,7 @@ void Sha256::Update(const void *aBuf, uint16_t aBufLength)
 {
     otError error;
 
-    SuccessOrExit(error = otPlatCryptoSha256Update(&mContext, aBuf, aBufLength));
+    otbrSuccessOrExit(error = otPlatCryptoSha256Update(&mContext, aBuf, aBufLength));
 
 exit:
     if (error != OT_ERROR_NONE)
@@ -94,7 +94,7 @@ void Sha256::Finish(Hash &aHash)
 {
     otError error;
 
-    SuccessOrExit(error = otPlatCryptoSha256Finish(&mContext, aHash.m8, Hash::kSize));
+    otbrSuccessOrExit(error = otPlatCryptoSha256Finish(&mContext, aHash.m8, Hash::kSize));
 
 exit:
     if (error != OT_ERROR_NONE)

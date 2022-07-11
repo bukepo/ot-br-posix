@@ -37,25 +37,13 @@ Request::Request(void)
 {
 }
 
-void Request::SetUrl(const char *aString, size_t aLength)
-{
-    mUrl += std::string(aString, aLength);
-}
+void Request::SetUrl(const char *aString, size_t aLength) { mUrl += std::string(aString, aLength); }
 
-void Request::SetBody(const char *aString, size_t aLength)
-{
-    mBody += std::string(aString, aLength);
-}
+void Request::SetBody(const char *aString, size_t aLength) { mBody += std::string(aString, aLength); }
 
-void Request::SetContentLength(size_t aContentLength)
-{
-    mContentLength = aContentLength;
-}
+void Request::SetContentLength(size_t aContentLength) { mContentLength = aContentLength; }
 
-void Request::SetMethod(int32_t aMethod)
-{
-    mMethod = aMethod;
-}
+void Request::SetMethod(int32_t aMethod) { mMethod = aMethod; }
 
 void Request::SetNextHeaderField(const char *aString, size_t aLength)
 {
@@ -67,15 +55,9 @@ void Request::SetHeaderValue(const char *aString, size_t aLength)
     mHeaders[mNextHeaderField] = std::string(aString, aLength);
 }
 
-HttpMethod Request::GetMethod() const
-{
-    return static_cast<HttpMethod>(mMethod);
-}
+HttpMethod Request::GetMethod() const { return static_cast<HttpMethod>(mMethod); }
 
-std::string Request::GetBody() const
-{
-    return mBody;
-}
+std::string Request::GetBody() const { return mBody; }
 
 std::string Request::GetUrl(void) const
 {
@@ -92,7 +74,7 @@ std::string Request::GetUrl(void) const
         url.pop_back();
     }
 
-    VerifyOrExit(url.size() > 0, url = "/");
+    otbrVerifyOrExit(url.size() > 0, url = "/");
 
 exit:
     return url;
@@ -105,20 +87,11 @@ std::string Request::GetHeaderValue(const std::string aHeaderField) const
     return (it == mHeaders.end()) ? "" : it->second;
 }
 
-void Request::SetReadComplete(void)
-{
-    mComplete = true;
-}
+void Request::SetReadComplete(void) { mComplete = true; }
 
-void Request::ResetReadComplete(void)
-{
-    mComplete = false;
-}
+void Request::ResetReadComplete(void) { mComplete = false; }
 
-bool Request::IsComplete(void) const
-{
-    return mComplete;
-}
+bool Request::IsComplete(void) const { return mComplete; }
 
 } // namespace rest
 } // namespace otbr

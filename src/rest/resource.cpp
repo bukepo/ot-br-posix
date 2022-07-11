@@ -144,10 +144,7 @@ Resource::Resource(ControllerOpenThread *aNcp)
     mResourceCallbackMap.emplace(OT_REST_RESOURCE_PATH_DIAGNOSTICS, &Resource::HandleDiagnosticCallback);
 }
 
-void Resource::Init(void)
-{
-    mInstance = mNcp->GetThreadHelper()->GetInstance();
-}
+void Resource::Init(void) { mInstance = mNcp->GetThreadHelper()->GetInstance(); }
 
 void Resource::Handle(Request &aRequest, Response &aResponse) const
 {
@@ -221,7 +218,7 @@ void Resource::GetNodeInfo(Response &aResponse) const
     std::string     body;
     std::string     errorCode;
 
-    VerifyOrExit(otBorderAgentGetId(mInstance, &node.mBaId) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otBorderAgentGetId(mInstance, &node.mBaId) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     (void)otThreadGetLeaderData(mInstance, &node.mLeaderData);
 
     node.mNumOfRouter = 0;
@@ -262,8 +259,8 @@ void Resource::DeleteNodeInfo(Response &aResponse) const
     otbrError   error = OTBR_ERROR_NONE;
     std::string errorCode;
 
-    VerifyOrExit(mNcp->GetThreadHelper()->Detach() == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
-    VerifyOrExit(otInstanceErasePersistentInfo(mInstance) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(mNcp->GetThreadHelper()->Detach() == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(otInstanceErasePersistentInfo(mInstance) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     mNcp->Reset();
 
 exit:
@@ -307,7 +304,7 @@ void Resource::GetDataBaId(Response &aResponse) const
     std::string     body;
     std::string     errorCode;
 
-    VerifyOrExit(otBorderAgentGetId(mInstance, &id) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otBorderAgentGetId(mInstance, &id) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
 
     body = Json::Bytes2HexJsonString(id.mId, sizeof(id));
     aResponse.SetBody(body);
@@ -382,23 +379,23 @@ void Resource::SetDataState(const Request &aRequest, Response &aResponse) const
     std::string errorCode;
     std::string body;
 
-    VerifyOrExit(Json::JsonString2String(aRequest.GetBody(), body), error = OTBR_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(Json::JsonString2String(aRequest.GetBody(), body), error = OTBR_ERROR_INVALID_ARGS);
     if (body == "enable")
     {
         if (!otIp6IsEnabled(mInstance))
         {
-            VerifyOrExit(otIp6SetEnabled(mInstance, true) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
+            otbrVerifyOrExit(otIp6SetEnabled(mInstance, true) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
         }
-        VerifyOrExit(otThreadSetEnabled(mInstance, true) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
+        otbrVerifyOrExit(otThreadSetEnabled(mInstance, true) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
     }
     else if (body == "disable")
     {
-        VerifyOrExit(otThreadSetEnabled(mInstance, false) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
-        VerifyOrExit(otIp6SetEnabled(mInstance, false) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
+        otbrVerifyOrExit(otThreadSetEnabled(mInstance, false) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
+        otbrVerifyOrExit(otIp6SetEnabled(mInstance, false) == OT_ERROR_NONE, error = OTBR_ERROR_INVALID_STATE);
     }
     else
     {
-        ExitNow(error = OTBR_ERROR_INVALID_ARGS);
+        otbrExitNow(error = OTBR_ERROR_INVALID_ARGS);
     }
 
     errorCode = GetHttpStatus(HttpStatusCode::kStatusOk);
@@ -476,7 +473,7 @@ void Resource::GetDataLeaderData(Response &aResponse) const
     std::string  body;
     std::string  errorCode;
 
-    VerifyOrExit(otThreadGetLeaderData(mInstance, &leaderData) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otThreadGetLeaderData(mInstance, &leaderData) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
 
     body = Json::LeaderData2JsonString(leaderData);
 
@@ -638,13 +635,13 @@ void Resource::GetDataset(DatasetType aDatasetType, const Request &aRequest, Res
     {
         if (aDatasetType == DatasetType::kActive)
         {
-            VerifyOrExit(otDatasetGetActiveTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE,
-                         error = OTBR_ERROR_NOT_FOUND);
+            otbrVerifyOrExit(otDatasetGetActiveTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE,
+                             error = OTBR_ERROR_NOT_FOUND);
         }
         else if (aDatasetType == DatasetType::kPending)
         {
-            VerifyOrExit(otDatasetGetPendingTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE,
-                         error = OTBR_ERROR_NOT_FOUND);
+            otbrVerifyOrExit(otDatasetGetPendingTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE,
+                             error = OTBR_ERROR_NOT_FOUND);
         }
 
         aResponse.SetContentType(OT_REST_CONTENT_TYPE_PLAIN);
@@ -654,12 +651,12 @@ void Resource::GetDataset(DatasetType aDatasetType, const Request &aRequest, Res
     {
         if (aDatasetType == DatasetType::kActive)
         {
-            VerifyOrExit(otDatasetGetActive(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_NOT_FOUND);
+            otbrVerifyOrExit(otDatasetGetActive(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_NOT_FOUND);
             body = Json::ActiveDataset2JsonString(dataset);
         }
         else if (aDatasetType == DatasetType::kPending)
         {
-            VerifyOrExit(otDatasetGetPending(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_NOT_FOUND);
+            otbrVerifyOrExit(otDatasetGetPending(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_NOT_FOUND);
             body = Json::PendingDataset2JsonString(dataset);
         }
     }
@@ -698,7 +695,7 @@ void Resource::SetDataset(DatasetType aDatasetType, const Request &aRequest, Res
 
     if (aDatasetType == DatasetType::kActive)
     {
-        VerifyOrExit(otThreadGetDeviceRole(mInstance) == OT_DEVICE_ROLE_DISABLED, error = OTBR_ERROR_INVALID_STATE);
+        otbrVerifyOrExit(otThreadGetDeviceRole(mInstance) == OT_DEVICE_ROLE_DISABLED, error = OTBR_ERROR_INVALID_STATE);
         errorOt = otDatasetGetActiveTlvs(mInstance, &datasetTlvs);
     }
     else if (aDatasetType == DatasetType::kPending)
@@ -709,8 +706,8 @@ void Resource::SetDataset(DatasetType aDatasetType, const Request &aRequest, Res
     // Create a new operational dataset if it doesn't exist.
     if (errorOt == OT_ERROR_NOT_FOUND)
     {
-        VerifyOrExit(otDatasetCreateNewNetwork(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
-        VerifyOrExit(otDatasetConvertToTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetCreateNewNetwork(mInstance, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetConvertToTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
         errorCode = GetHttpStatus(HttpStatusCode::kStatusCreated);
     }
 
@@ -719,35 +716,35 @@ void Resource::SetDataset(DatasetType aDatasetType, const Request &aRequest, Res
     if (isTlv)
     {
         ret = Json::Hex2BytesJsonString(aRequest.GetBody(), datasetUpdateTlvs.mTlvs, OT_OPERATIONAL_DATASET_MAX_LENGTH);
-        VerifyOrExit(ret >= 0, error = OTBR_ERROR_INVALID_ARGS);
+        otbrVerifyOrExit(ret >= 0, error = OTBR_ERROR_INVALID_ARGS);
         datasetUpdateTlvs.mLength = ret;
 
-        VerifyOrExit(otDatasetParseTlvs(&datasetUpdateTlvs, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
-        VerifyOrExit(otDatasetUpdateTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetParseTlvs(&datasetUpdateTlvs, &dataset) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetUpdateTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     }
     else
     {
         if (aDatasetType == DatasetType::kActive)
         {
-            VerifyOrExit(Json::JsonActiveDatasetString2Dataset(aRequest.GetBody(), dataset),
-                         error = OTBR_ERROR_INVALID_ARGS);
+            otbrVerifyOrExit(Json::JsonActiveDatasetString2Dataset(aRequest.GetBody(), dataset),
+                             error = OTBR_ERROR_INVALID_ARGS);
         }
         else if (aDatasetType == DatasetType::kPending)
         {
-            VerifyOrExit(Json::JsonPendingDatasetString2Dataset(aRequest.GetBody(), dataset),
-                         error = OTBR_ERROR_INVALID_ARGS);
-            VerifyOrExit(dataset.mComponents.mIsDelayPresent, error = OTBR_ERROR_INVALID_ARGS);
+            otbrVerifyOrExit(Json::JsonPendingDatasetString2Dataset(aRequest.GetBody(), dataset),
+                             error = OTBR_ERROR_INVALID_ARGS);
+            otbrVerifyOrExit(dataset.mComponents.mIsDelayPresent, error = OTBR_ERROR_INVALID_ARGS);
         }
-        VerifyOrExit(otDatasetUpdateTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetUpdateTlvs(&dataset, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     }
 
     if (aDatasetType == DatasetType::kActive)
     {
-        VerifyOrExit(otDatasetSetActiveTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetSetActiveTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     }
     else if (aDatasetType == DatasetType::kPending)
     {
-        VerifyOrExit(otDatasetSetPendingTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
+        otbrVerifyOrExit(otDatasetSetPendingTlvs(mInstance, &datasetTlvs) == OT_ERROR_NONE, error = OTBR_ERROR_REST);
     }
 
     aResponse.SetResponsCode(errorCode);
@@ -835,16 +832,16 @@ void Resource::Diagnostic(const Request &aRequest, Response &aResponse) const
     struct otIp6Address rloc16address = *otThreadGetRloc(mInstance);
     struct otIp6Address multicastAddress;
 
-    VerifyOrExit(otThreadSendDiagnosticGet(mInstance, &rloc16address, kAllTlvTypes, sizeof(kAllTlvTypes),
-                                           &Resource::DiagnosticResponseHandler,
-                                           const_cast<Resource *>(this)) == OT_ERROR_NONE,
-                 error = OTBR_ERROR_REST);
-    VerifyOrExit(otIp6AddressFromString(kMulticastAddrAllRouters, &multicastAddress) == OT_ERROR_NONE,
-                 error = OTBR_ERROR_REST);
-    VerifyOrExit(otThreadSendDiagnosticGet(mInstance, &multicastAddress, kAllTlvTypes, sizeof(kAllTlvTypes),
-                                           &Resource::DiagnosticResponseHandler,
-                                           const_cast<Resource *>(this)) == OT_ERROR_NONE,
-                 error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otThreadSendDiagnosticGet(mInstance, &rloc16address, kAllTlvTypes, sizeof(kAllTlvTypes),
+                                               &Resource::DiagnosticResponseHandler,
+                                               const_cast<Resource *>(this)) == OT_ERROR_NONE,
+                     error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otIp6AddressFromString(kMulticastAddrAllRouters, &multicastAddress) == OT_ERROR_NONE,
+                     error = OTBR_ERROR_REST);
+    otbrVerifyOrExit(otThreadSendDiagnosticGet(mInstance, &multicastAddress, kAllTlvTypes, sizeof(kAllTlvTypes),
+                                               &Resource::DiagnosticResponseHandler,
+                                               const_cast<Resource *>(this)) == OT_ERROR_NONE,
+                     error = OTBR_ERROR_REST);
 
 exit:
 
@@ -876,7 +873,7 @@ void Resource::DiagnosticResponseHandler(otError aError, const otMessage *aMessa
     char                          rloc[7];
     std::string                   keyRloc = "0xffee";
 
-    SuccessOrExit(aError);
+    otbrSuccessOrExit(aError);
 
     OTBR_UNUSED_VARIABLE(aMessageInfo);
 

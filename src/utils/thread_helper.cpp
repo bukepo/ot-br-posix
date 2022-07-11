@@ -60,7 +60,7 @@
 #include <openthread/platform/radio.h>
 
 #include "common/byteswap.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/tlv.hpp"
 #include "ncp/ncp_openthread.hpp"
@@ -77,7 +77,7 @@ const Tlv *FindTlv(uint8_t aTlvType, const uint8_t *aTlvs, int aTlvsSize)
     {
         if (tlv->GetType() == aTlvType)
         {
-            ExitNow(result = tlv);
+            otbrExitNow(result = tlv);
         }
     }
 
@@ -205,7 +205,7 @@ ThreadHelper::ThreadHelper(otInstance *aInstance, otbr::Ncp::ControllerOpenThrea
 #if OTBR_ENABLE_TELEMETRY_DATA_API && OTBR_ENABLE_NAT64
     otError error;
 
-    SuccessOrExit(error = otPlatCryptoRandomGet(mNat64Ipv6AddressSalt, sizeof(mNat64Ipv6AddressSalt)));
+    otbrSuccessOrExit(error = otPlatCryptoRandomGet(mNat64Ipv6AddressSalt, sizeof(mNat64Ipv6AddressSalt)));
 
 exit:
     if (error != OT_ERROR_NONE)
@@ -233,7 +233,7 @@ void ThreadHelper::StateChangedCallback(otChangedFlags aFlags)
                 if (mWaitingMgmtSetResponse)
                 {
                     otbrLogInfo("StateChangedCallback is called during waiting for Mgmt Set Response");
-                    ExitNow();
+                    otbrExitNow();
                 }
                 if (mAttachPendingDatasetTlvs.mLength == 0)
                 {
@@ -285,7 +285,7 @@ void ThreadHelper::ActiveDatasetChangedCallback()
     otError                  error;
     otOperationalDatasetTlvs datasetTlvs;
 
-    SuccessOrExit(error = otDatasetGetActiveTlvs(mInstance, &datasetTlvs));
+    otbrSuccessOrExit(error = otDatasetGetActiveTlvs(mInstance, &datasetTlvs));
 
     for (const auto &handler : mActiveDatasetChangeHandlers)
     {
@@ -313,16 +313,13 @@ void ThreadHelper::OnUpdateMeshCopTxt(std::map<std::string, std::vector<uint8_t>
 }
 #endif
 
-void ThreadHelper::AddDeviceRoleHandler(DeviceRoleHandler aHandler)
-{
-    mDeviceRoleHandlers.emplace_back(aHandler);
-}
+void ThreadHelper::AddDeviceRoleHandler(DeviceRoleHandler aHandler) { mDeviceRoleHandlers.emplace_back(aHandler); }
 
 void ThreadHelper::Scan(ScanHandler aHandler)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(aHandler != nullptr);
+    otbrVerifyOrExit(aHandler != nullptr);
     mScanHandler = aHandler;
     mScanResults.clear();
 
@@ -345,8 +342,8 @@ void ThreadHelper::EnergyScan(uint32_t aScanDuration, EnergyScanHandler aHandler
     otError  error             = OT_ERROR_NONE;
     uint32_t preferredChannels = otPlatRadioGetPreferredChannelMask(mInstance);
 
-    VerifyOrExit(aHandler != nullptr, error = OT_ERROR_BUSY);
-    VerifyOrExit(aScanDuration < UINT16_MAX, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(aHandler != nullptr, error = OT_ERROR_BUSY);
+    otbrVerifyOrExit(aScanDuration < UINT16_MAX, error = OT_ERROR_INVALID_ARGS);
     mEnergyScanHandler = aHandler;
     mEnergyScanResults.clear();
 
@@ -462,14 +459,14 @@ void ThreadHelper::Attach(const std::string          &aNetworkName,
     otError              error   = OT_ERROR_NONE;
     otOperationalDataset dataset = {};
 
-    VerifyOrExit(aHandler != nullptr, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
-    VerifyOrExit(aNetworkKey.empty() || aNetworkKey.size() == sizeof(dataset.mNetworkKey.m8),
-                 error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(aPSKc.empty() || aPSKc.size() == sizeof(dataset.mPskc.m8), error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(aChannelMask != 0, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(aHandler != nullptr, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(aNetworkKey.empty() || aNetworkKey.size() == sizeof(dataset.mNetworkKey.m8),
+                     error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(aPSKc.empty() || aPSKc.size() == sizeof(dataset.mPskc.m8), error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(aChannelMask != 0, error = OT_ERROR_INVALID_ARGS);
 
-    SuccessOrExit(error = otDatasetCreateNewNetwork(mInstance, &dataset));
+    otbrSuccessOrExit(error = otDatasetCreateNewNetwork(mInstance, &dataset));
 
     if (aExtPanId != UINT64_MAX)
     {
@@ -491,21 +488,21 @@ void ThreadHelper::Attach(const std::string          &aNetworkName,
         memcpy(dataset.mPskc.m8, &aPSKc[0], sizeof(dataset.mPskc.m8));
     }
 
-    SuccessOrExit(error = otNetworkNameFromString(&dataset.mNetworkName, aNetworkName.c_str()));
+    otbrSuccessOrExit(error = otNetworkNameFromString(&dataset.mNetworkName, aNetworkName.c_str()));
 
     dataset.mChannelMask &= aChannelMask;
-    VerifyOrExit(dataset.mChannelMask != 0, otbrLogWarning("Invalid channel mask"), error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mChannelMask != 0, otbrLogWarning("Invalid channel mask"), error = OT_ERROR_INVALID_ARGS);
 
     dataset.mChannel = RandomChannelFromChannelMask(dataset.mChannelMask);
 
-    SuccessOrExit(error = otDatasetSetActive(mInstance, &dataset));
+    otbrSuccessOrExit(error = otDatasetSetActive(mInstance, &dataset));
 
     if (!otIp6IsEnabled(mInstance))
     {
-        SuccessOrExit(error = otIp6SetEnabled(mInstance, true));
+        otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, true));
     }
 
-    SuccessOrExit(error = otThreadSetEnabled(mInstance, true));
+    otbrSuccessOrExit(error = otThreadSetEnabled(mInstance, true));
     mAttachDelayMs = 0;
     mAttachHandler = aHandler;
 
@@ -523,13 +520,13 @@ void ThreadHelper::Attach(AttachHandler aHandler)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
 
     if (!otIp6IsEnabled(mInstance))
     {
-        SuccessOrExit(error = otIp6SetEnabled(mInstance, true));
+        otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, true));
     }
-    SuccessOrExit(error = otThreadSetEnabled(mInstance, true));
+    otbrSuccessOrExit(error = otThreadSetEnabled(mInstance, true));
     mAttachHandler = aHandler;
 
 exit:
@@ -546,8 +543,8 @@ otError ThreadHelper::Detach(void)
 {
     otError error = OT_ERROR_NONE;
 
-    SuccessOrExit(error = otThreadSetEnabled(mInstance, false));
-    SuccessOrExit(error = otIp6SetEnabled(mInstance, false));
+    otbrSuccessOrExit(error = otThreadSetEnabled(mInstance, false));
+    otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, false));
 
 exit:
     return error;
@@ -571,16 +568,16 @@ void ThreadHelper::JoinerStart(const std::string &aPskd,
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(aHandler != nullptr, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(aHandler != nullptr, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_INVALID_STATE);
 
     if (!otIp6IsEnabled(mInstance))
     {
-        SuccessOrExit(error = otIp6SetEnabled(mInstance, true));
+        otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, true));
     }
-    SuccessOrExit(error = otJoinerStart(mInstance, aPskd.c_str(), aProvisioningUrl.c_str(), aVendorName.c_str(),
-                                        aVendorModel.c_str(), aVendorSwVersion.c_str(), aVendorData.c_str(),
-                                        JoinerCallback, this));
+    otbrSuccessOrExit(error = otJoinerStart(mInstance, aPskd.c_str(), aProvisioningUrl.c_str(), aVendorName.c_str(),
+                                            aVendorModel.c_str(), aVendorSwVersion.c_str(), aVendorData.c_str(),
+                                            JoinerCallback, this));
     mJoinerHandler = aHandler;
 
 exit:
@@ -622,8 +619,8 @@ otError ThreadHelper::TryResumeNetwork(void)
     {
         if (!otIp6IsEnabled(mInstance))
         {
-            SuccessOrExit(error = otIp6SetEnabled(mInstance, true));
-            SuccessOrExit(error = otThreadSetEnabled(mInstance, true));
+            otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, true));
+            otbrSuccessOrExit(error = otThreadSetEnabled(mInstance, true));
         }
     }
 
@@ -664,32 +661,32 @@ void ThreadHelper::AttachAllNodesTo(const std::vector<uint8_t> &aDatasetTlvs, At
     if (aHandler == nullptr)
     {
         otbrLogWarning("Attach Handler is nullptr");
-        ExitNow(error = OT_ERROR_INVALID_ARGS);
+        otbrExitNow(error = OT_ERROR_INVALID_ARGS);
     }
-    VerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_BUSY);
+    otbrVerifyOrExit(mAttachHandler == nullptr && mJoinerHandler == nullptr, error = OT_ERROR_BUSY);
 
-    VerifyOrExit(aDatasetTlvs.size() <= sizeof(datasetTlvs.mTlvs), error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(aDatasetTlvs.size() <= sizeof(datasetTlvs.mTlvs), error = OT_ERROR_INVALID_ARGS);
     std::copy(aDatasetTlvs.begin(), aDatasetTlvs.end(), datasetTlvs.mTlvs);
     datasetTlvs.mLength = aDatasetTlvs.size();
 
-    SuccessOrExit(error = otDatasetParseTlvs(&datasetTlvs, &dataset));
-    VerifyOrExit(dataset.mComponents.mIsActiveTimestampPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsNetworkKeyPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsNetworkNamePresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsExtendedPanIdPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsMeshLocalPrefixPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsPanIdPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsChannelPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsPskcPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsSecurityPolicyPresent, error = OT_ERROR_INVALID_ARGS);
-    VerifyOrExit(dataset.mComponents.mIsChannelMaskPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrSuccessOrExit(error = otDatasetParseTlvs(&datasetTlvs, &dataset));
+    otbrVerifyOrExit(dataset.mComponents.mIsActiveTimestampPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsNetworkKeyPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsNetworkNamePresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsExtendedPanIdPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsMeshLocalPrefixPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsPanIdPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsChannelPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsPskcPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsSecurityPolicyPresent, error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(dataset.mComponents.mIsChannelMaskPresent, error = OT_ERROR_INVALID_ARGS);
 
-    VerifyOrExit(FindTlv(OT_MESHCOP_TLV_PENDINGTIMESTAMP, datasetTlvs.mTlvs, datasetTlvs.mLength) == nullptr &&
-                     FindTlv(OT_MESHCOP_TLV_DELAYTIMER, datasetTlvs.mTlvs, datasetTlvs.mLength) == nullptr,
-                 error = OT_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit(FindTlv(OT_MESHCOP_TLV_PENDINGTIMESTAMP, datasetTlvs.mTlvs, datasetTlvs.mLength) == nullptr &&
+                         FindTlv(OT_MESHCOP_TLV_DELAYTIMER, datasetTlvs.mTlvs, datasetTlvs.mLength) == nullptr,
+                     error = OT_ERROR_INVALID_ARGS);
 
     // There must be sufficient space for a Pending Timestamp TLV and a Delay Timer TLV.
-    VerifyOrExit(
+    otbrVerifyOrExit(
         static_cast<int>(datasetTlvs.mLength +
                          (sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint64_t))    // Pending Timestamp TLV (10 bytes)
                          + (sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint32_t))) // Delay Timer TLV (6 bytes)
@@ -717,20 +714,20 @@ void ThreadHelper::AttachAllNodesTo(const std::vector<uint8_t> &aDatasetTlvs, At
         bool                 hasActiveDataset;
 
         error = otDatasetGetActive(mInstance, &existingDataset);
-        VerifyOrExit(error == OT_ERROR_NONE || error == OT_ERROR_NOT_FOUND);
+        otbrVerifyOrExit(error == OT_ERROR_NONE || error == OT_ERROR_NOT_FOUND);
 
         hasActiveDataset = (error == OT_ERROR_NONE);
 
         if (!hasActiveDataset)
         {
-            SuccessOrExit(error = otDatasetSetActiveTlvs(mInstance, &datasetTlvs));
+            otbrSuccessOrExit(error = otDatasetSetActiveTlvs(mInstance, &datasetTlvs));
         }
 
         if (!otIp6IsEnabled(mInstance))
         {
-            SuccessOrExit(error = otIp6SetEnabled(mInstance, true));
+            otbrSuccessOrExit(error = otIp6SetEnabled(mInstance, true));
         }
-        SuccessOrExit(error = otThreadSetEnabled(mInstance, true));
+        otbrSuccessOrExit(error = otThreadSetEnabled(mInstance, true));
 
         if (hasActiveDataset)
         {
@@ -744,11 +741,11 @@ void ThreadHelper::AttachAllNodesTo(const std::vector<uint8_t> &aDatasetTlvs, At
         }
         mWaitingMgmtSetResponse = false;
         mAttachHandler          = aHandler;
-        ExitNow();
+        otbrExitNow();
     }
 
-    SuccessOrExit(error = otDatasetSendMgmtPendingSet(mInstance, &emptyDataset, datasetTlvs.mTlvs, datasetTlvs.mLength,
-                                                      MgmtSetResponseHandler, this));
+    otbrSuccessOrExit(error = otDatasetSendMgmtPendingSet(mInstance, &emptyDataset, datasetTlvs.mTlvs,
+                                                          datasetTlvs.mLength, MgmtSetResponseHandler, this));
     mAttachDelayMs          = kDelayTimerMilliseconds;
     mAttachHandler          = aHandler;
     mWaitingMgmtSetResponse = true;
@@ -778,7 +775,7 @@ void ThreadHelper::MgmtSetResponseHandler(otError aResult)
         otbrLogWarning("mAttachHandler is nullptr");
         mAttachDelayMs            = 0;
         mAttachPendingDatasetTlvs = {};
-        ExitNow();
+        otbrExitNow();
     }
 
     switch (aResult)
@@ -817,7 +814,7 @@ otError ThreadHelper::PermitUnsecureJoin(uint16_t aPort, uint32_t aSeconds)
 
     // 0xff to allow all devices to join
     memset(&steeringData.m8, 0xff, sizeof(steeringData.m8));
-    SuccessOrExit(error = otIp6AddUnsecurePort(mInstance, aPort));
+    otbrSuccessOrExit(error = otIp6AddUnsecurePort(mInstance, aPort));
     otThreadSetSteeringData(mInstance, &steeringData);
 
     if (aSeconds > 0)
@@ -865,9 +862,9 @@ void ThreadHelper::DetachGracefully(ResultHandler aHandler)
 {
     otError error = OT_ERROR_NONE;
 
-    VerifyOrExit(mDetachGracefullyHandler == nullptr, error = OT_ERROR_BUSY);
+    otbrVerifyOrExit(mDetachGracefullyHandler == nullptr, error = OT_ERROR_BUSY);
 
-    SuccessOrExit(error = otThreadDetachGracefully(mInstance, &ThreadHelper::DetachGracefullyCallback, this));
+    otbrSuccessOrExit(error = otThreadDetachGracefully(mInstance, &ThreadHelper::DetachGracefullyCallback, this));
     mDetachGracefullyHandler = aHandler;
 
 exit:

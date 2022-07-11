@@ -58,8 +58,8 @@ otbrError DBusObject::Init(void)
 
     vTable.message_function = DBusObject::sMessageHandler;
 
-    VerifyOrExit(dbus_connection_register_object_path(mConnection, mObjectPath.c_str(), &vTable, this),
-                 error = OTBR_ERROR_DBUS);
+    otbrVerifyOrExit(dbus_connection_register_object_path(mConnection, mObjectPath.c_str(), &vTable, this),
+                     error = OTBR_ERROR_DBUS);
     RegisterMethod(DBUS_INTERFACE_PROPERTIES, DBUS_PROPERTY_GET_METHOD,
                    std::bind(&DBusObject::GetPropertyMethodHandler, this, _1));
     RegisterMethod(DBUS_INTERFACE_PROPERTIES, DBUS_PROPERTY_SET_METHOD,
@@ -137,23 +137,23 @@ void DBusObject::GetPropertyMethodHandler(DBusRequest &aRequest)
     otError         error      = OT_ERROR_NONE;
     otError         replyError = OT_ERROR_NONE;
 
-    VerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
-    VerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
-    VerifyOrExit(DBusMessageExtract(&iter, interfaceName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
-    VerifyOrExit(DBusMessageExtract(&iter, propertyName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
+    otbrVerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageExtract(&iter, interfaceName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(DBusMessageExtract(&iter, propertyName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
     {
         auto propertyIter = mGetPropertyHandlers.find(interfaceName);
 
         otbrLogDebug("GetProperty %s.%s", interfaceName.c_str(), propertyName.c_str());
-        VerifyOrExit(propertyIter != mGetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
+        otbrVerifyOrExit(propertyIter != mGetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
         {
             DBusMessageIter replyIter;
             auto           &interfaceHandlers = propertyIter->second;
             auto            interfaceIter     = interfaceHandlers.find(propertyName);
 
-            VerifyOrExit(interfaceIter != interfaceHandlers.end(), error = OT_ERROR_NOT_FOUND);
+            otbrVerifyOrExit(interfaceIter != interfaceHandlers.end(), error = OT_ERROR_NOT_FOUND);
             dbus_message_iter_init_append(reply.get(), &replyIter);
-            SuccessOrExit(replyError = interfaceIter->second(replyIter));
+            otbrSuccessOrExit(replyError = interfaceIter->second(replyIter));
         }
     }
 exit:
@@ -189,25 +189,26 @@ void DBusObject::GetAllPropertiesMethodHandler(DBusRequest &aRequest)
     auto              args  = std::tie(interfaceName);
     otError           error = OT_ERROR_NONE;
 
-    VerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
-    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
-    VerifyOrExit(mGetPropertyHandlers.find(interfaceName) != mGetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
+    otbrVerifyOrExit(reply != nullptr, error = OT_ERROR_NO_BUFS);
+    otbrVerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(mGetPropertyHandlers.find(interfaceName) != mGetPropertyHandlers.end(),
+                     error = OT_ERROR_NOT_FOUND);
     dbus_message_iter_init_append(reply.get(), &iter);
 
     for (auto &p : mGetPropertyHandlers.at(interfaceName))
     {
-        VerifyOrExit(dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-                                                      "{" DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING "}",
-                                                      &subIter),
-                     error = OT_ERROR_FAILED);
-        VerifyOrExit(dbus_message_iter_open_container(&subIter, DBUS_TYPE_DICT_ENTRY, nullptr, &dictEntryIter),
-                     error = OT_ERROR_FAILED);
-        VerifyOrExit(DBusMessageEncode(&dictEntryIter, p.first) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
+        otbrVerifyOrExit(
+            dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+                                             "{" DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING "}", &subIter),
+            error = OT_ERROR_FAILED);
+        otbrVerifyOrExit(dbus_message_iter_open_container(&subIter, DBUS_TYPE_DICT_ENTRY, nullptr, &dictEntryIter),
+                         error = OT_ERROR_FAILED);
+        otbrVerifyOrExit(DBusMessageEncode(&dictEntryIter, p.first) == OTBR_ERROR_NONE, error = OT_ERROR_FAILED);
 
-        SuccessOrExit(error = p.second(dictEntryIter));
+        otbrSuccessOrExit(error = p.second(dictEntryIter));
 
-        VerifyOrExit(dbus_message_iter_close_container(&subIter, &dictEntryIter), error = OT_ERROR_FAILED);
-        VerifyOrExit(dbus_message_iter_close_container(&iter, &subIter));
+        otbrVerifyOrExit(dbus_message_iter_close_container(&subIter, &dictEntryIter), error = OT_ERROR_FAILED);
+        otbrVerifyOrExit(dbus_message_iter_close_container(&iter, &subIter));
     }
 
 exit:
@@ -229,16 +230,16 @@ void DBusObject::SetPropertyMethodHandler(DBusRequest &aRequest)
     std::string     propertyFullPath;
     otError         error = OT_ERROR_NONE;
 
-    VerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
-    VerifyOrExit(DBusMessageExtract(&iter, interfaceName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
-    VerifyOrExit(DBusMessageExtract(&iter, propertyName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(dbus_message_iter_init(aRequest.GetMessage(), &iter), error = OT_ERROR_FAILED);
+    otbrVerifyOrExit(DBusMessageExtract(&iter, interfaceName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
+    otbrVerifyOrExit(DBusMessageExtract(&iter, propertyName) == OTBR_ERROR_NONE, error = OT_ERROR_PARSE);
 
     propertyFullPath = interfaceName + "." + propertyName;
     otbrLogInfo("SetProperty %s", propertyFullPath.c_str());
     {
         auto handlerIter = mSetPropertyHandlers.find(propertyFullPath);
 
-        VerifyOrExit(handlerIter != mSetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
+        otbrVerifyOrExit(handlerIter != mSetPropertyHandlers.end(), error = OT_ERROR_NOT_FOUND);
         error = handlerIter->second(iter);
     }
 
@@ -252,19 +253,14 @@ exit:
     return;
 }
 
-DBusObject::~DBusObject(void)
-{
-}
+DBusObject::~DBusObject(void) {}
 
 UniqueDBusMessage DBusObject::NewSignalMessage(const std::string &aInterfaceName, const std::string &aSignalName)
 {
     return UniqueDBusMessage(dbus_message_new_signal(mObjectPath.c_str(), aInterfaceName.c_str(), aSignalName.c_str()));
 }
 
-void DBusObject::Flush(void)
-{
-    dbus_connection_flush(mConnection);
-}
+void DBusObject::Flush(void) { dbus_connection_flush(mConnection); }
 
 } // namespace DBus
 } // namespace otbr

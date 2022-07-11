@@ -44,7 +44,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 // Temporary solution before posix platform header files are cleaned up.
@@ -68,10 +68,7 @@ OpenThreadClient::OpenThreadClient(const char *aNetifName)
 {
 }
 
-OpenThreadClient::~OpenThreadClient(void)
-{
-    Disconnect();
-}
+OpenThreadClient::~OpenThreadClient(void) { Disconnect(); }
 
 void OpenThreadClient::Disconnect(void)
 {
@@ -88,13 +85,13 @@ bool OpenThreadClient::Connect(void)
     int                ret;
 
     mSocket = socket(AF_UNIX, SOCK_STREAM, 0);
-    VerifyOrExit(mSocket != -1, perror("socket"); ret = EXIT_FAILURE);
+    otbrVerifyOrExit(mSocket != -1, perror("socket"); ret = EXIT_FAILURE);
 
     memset(&sockname, 0, sizeof(struct sockaddr_un));
     sockname.sun_family = AF_UNIX;
     ret = snprintf(sockname.sun_path, sizeof(sockname.sun_path), OPENTHREAD_POSIX_DAEMON_SOCKET_NAME, mNetifName);
 
-    VerifyOrExit(ret >= 0 && static_cast<size_t>(ret) < sizeof(sockname.sun_path), {
+    otbrVerifyOrExit(ret >= 0 && static_cast<size_t>(ret) < sizeof(sockname.sun_path), {
         errno = EINVAL;
         ret   = -1;
     });
@@ -153,12 +150,12 @@ char *OpenThreadClient::Execute(const char *aFormat, ...)
     if (ret < 0)
     {
         otbrLogErr("Failed to generate command: %s", strerror(errno));
-        ExitNow();
+        otbrExitNow();
     }
     if (static_cast<size_t>(ret) >= sizeof(mBuffer) - 2)
     {
         otbrLogErr("Command exceeds maximum limit: %d", kBufferSize);
-        ExitNow();
+        otbrExitNow();
     }
 
     mBuffer[0]       = '\n';
@@ -171,7 +168,7 @@ char *OpenThreadClient::Execute(const char *aFormat, ...)
     {
         mBuffer[ret] = '\0';
         otbrLogErr("Failed to send command: %s", mBuffer);
-        ExitNow();
+        otbrExitNow();
     }
 
     for (int i = 0; i < mTimeout; ++i)
@@ -184,14 +181,14 @@ char *OpenThreadClient::Execute(const char *aFormat, ...)
         FD_SET(mSocket, &readFdSet);
 
         ret = select(mSocket + 1, &readFdSet, nullptr, nullptr, &timeout);
-        VerifyOrExit(ret != -1 || errno == EINTR);
+        otbrVerifyOrExit(ret != -1 || errno == EINTR);
         if (ret <= 0)
         {
             continue;
         }
 
         count = read(mSocket, &mBuffer[rxLength], sizeof(mBuffer) - rxLength);
-        VerifyOrExit(count > 0);
+        otbrVerifyOrExit(count > 0);
         rxLength += count;
 
         mBuffer[rxLength] = '\0';
@@ -224,7 +221,7 @@ char *OpenThreadClient::Read(const char *aResponse, int aTimeout)
     for (int i = 0; i < aTimeout; ++i)
     {
         count = read(mSocket, &mBuffer[rxLength], sizeof(mBuffer) - rxLength);
-        VerifyOrExit(count > 0);
+        otbrVerifyOrExit(count > 0);
         rxLength += count;
 
         mBuffer[rxLength] = '\0';
@@ -248,7 +245,7 @@ int OpenThreadClient::Scan(WpanNetworkInfo *aNetworks, int aLength)
 
     mTimeout = 5000;
     result   = Execute("scan");
-    VerifyOrExit(result != nullptr);
+    otbrVerifyOrExit(result != nullptr);
 
     for (result = strtok(result, "\r\n"); result != nullptr && rval < aLength; result = strtok(nullptr, "\r\n"))
     {
@@ -307,10 +304,10 @@ bool OpenThreadClient::FactoryReset(void)
     signal(SIGPIPE, handler);
     Disconnect();
     sleep(4);
-    VerifyOrExit(rval = Connect());
+    otbrVerifyOrExit(rval = Connect());
 
     result = Execute("version");
-    VerifyOrExit(result != nullptr);
+    otbrVerifyOrExit(result != nullptr);
 
     rval = strstr(result, "OPENTHREAD") != nullptr;
 

@@ -29,7 +29,7 @@
 #include "rest/json.hpp"
 #include <sstream>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/types.hpp"
 
 extern "C" {
@@ -56,7 +56,7 @@ std::string String2JsonString(const std::string &aString)
     cJSON      *json    = nullptr;
     char       *jsonOut = nullptr;
 
-    VerifyOrExit(aString.size() > 0);
+    otbrVerifyOrExit(aString.size() > 0);
 
     json    = cJSON_CreateString(aString.c_str());
     jsonOut = cJSON_Print(json);
@@ -78,8 +78,8 @@ bool JsonString2String(const std::string &aJsonString, std::string &aString)
     cJSON *jsonString;
     bool   ret = true;
 
-    VerifyOrExit((jsonString = cJSON_Parse(aJsonString.c_str())) != nullptr, ret = false);
-    VerifyOrExit(cJSON_IsString(jsonString), ret = false);
+    otbrVerifyOrExit((jsonString = cJSON_Parse(aJsonString.c_str())) != nullptr, ret = false);
+    otbrVerifyOrExit(cJSON_IsString(jsonString), ret = false);
 
     aString = std::string(jsonString->valuestring);
 
@@ -94,7 +94,7 @@ std::string Json2String(const cJSON *aJson)
     std::string ret;
     char       *jsonOut = nullptr;
 
-    VerifyOrExit(aJson != nullptr);
+    otbrVerifyOrExit(aJson != nullptr);
 
     jsonOut = cJSON_Print(aJson);
     ret     = jsonOut;
@@ -108,10 +108,7 @@ exit:
     return ret;
 }
 
-static cJSON *CString2Json(const char *aString)
-{
-    return cJSON_CreateString(aString);
-}
+static cJSON *CString2Json(const char *aString) { return cJSON_CreateString(aString); }
 
 static cJSON *Mode2Json(const otLinkModeConfig &aMode)
 {
@@ -151,8 +148,8 @@ otbrError Json2IpPrefix(const cJSON *aJson, otIp6NetworkPrefix &aIpPrefix)
     std::string        tmp;
     Ip6Address         addr;
 
-    VerifyOrExit(std::getline(ipPrefixStr, tmp, '/'), error = OTBR_ERROR_INVALID_ARGS);
-    VerifyOrExit((error = addr.FromString(tmp.c_str(), addr)) == OTBR_ERROR_NONE);
+    otbrVerifyOrExit(std::getline(ipPrefixStr, tmp, '/'), error = OTBR_ERROR_INVALID_ARGS);
+    otbrVerifyOrExit((error = addr.FromString(tmp.c_str(), addr)) == OTBR_ERROR_NONE);
 
     memcpy(aIpPrefix.m8, addr.m8, OT_IP6_PREFIX_SIZE);
 exit:
@@ -717,7 +714,7 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "ActiveTimestamp");
     if (cJSON_IsObject(value))
     {
-        VerifyOrExit(Json2Timestamp(value, timestamp), ret = false);
+        otbrVerifyOrExit(Json2Timestamp(value, timestamp), ret = false);
         aDataset.mActiveTimestamp                      = timestamp;
         aDataset.mComponents.mIsActiveTimestampPresent = true;
     }
@@ -727,16 +724,16 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     }
     else if (value != nullptr)
     {
-        ExitNow(ret = false);
+        otbrExitNow(ret = false);
     }
 
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "NetworkKey");
     if (cJSON_IsString(value))
     {
-        VerifyOrExit(value->valuestring != nullptr, ret = false);
-        VerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mNetworkKey.m8,
-                                         OT_NETWORK_KEY_SIZE) == OT_NETWORK_KEY_SIZE,
-                     ret = false);
+        otbrVerifyOrExit(value->valuestring != nullptr, ret = false);
+        otbrVerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mNetworkKey.m8,
+                                             OT_NETWORK_KEY_SIZE) == OT_NETWORK_KEY_SIZE,
+                         ret = false);
         aDataset.mComponents.mIsNetworkKeyPresent = true;
     }
     else if (cJSON_IsNull(value))
@@ -747,8 +744,8 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "NetworkName");
     if (cJSON_IsString(value))
     {
-        VerifyOrExit(value->valuestring != nullptr, ret = false);
-        VerifyOrExit(strlen(value->valuestring) <= OT_NETWORK_NAME_MAX_SIZE, ret = false);
+        otbrVerifyOrExit(value->valuestring != nullptr, ret = false);
+        otbrVerifyOrExit(strlen(value->valuestring) <= OT_NETWORK_NAME_MAX_SIZE, ret = false);
         strncpy(aDataset.mNetworkName.m8, value->valuestring, OT_NETWORK_NAME_MAX_SIZE);
         aDataset.mComponents.mIsNetworkNamePresent = true;
     }
@@ -760,10 +757,10 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "ExtPanId");
     if (cJSON_IsString(value))
     {
-        VerifyOrExit(value->valuestring != nullptr, ret = false);
-        VerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mExtendedPanId.m8,
-                                         OT_EXT_PAN_ID_SIZE) == OT_EXT_PAN_ID_SIZE,
-                     ret = false);
+        otbrVerifyOrExit(value->valuestring != nullptr, ret = false);
+        otbrVerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mExtendedPanId.m8,
+                                             OT_EXT_PAN_ID_SIZE) == OT_EXT_PAN_ID_SIZE,
+                         ret = false);
         aDataset.mComponents.mIsExtendedPanIdPresent = true;
     }
     else if (cJSON_IsNull(value))
@@ -774,8 +771,8 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "MeshLocalPrefix");
     if (cJSON_IsString(value))
     {
-        VerifyOrExit(value->valuestring != nullptr, ret = false);
-        VerifyOrExit(Json2IpPrefix(value, aDataset.mMeshLocalPrefix) == OTBR_ERROR_NONE, ret = false);
+        otbrVerifyOrExit(value->valuestring != nullptr, ret = false);
+        otbrVerifyOrExit(Json2IpPrefix(value, aDataset.mMeshLocalPrefix) == OTBR_ERROR_NONE, ret = false);
         aDataset.mComponents.mIsMeshLocalPrefixPresent = true;
     }
     else if (cJSON_IsNull(value))
@@ -808,10 +805,10 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "PSKc");
     if (cJSON_IsString(value))
     {
-        VerifyOrExit(value->valuestring != nullptr, ret = false);
-        VerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mPskc.m8, OT_PSKC_MAX_SIZE) ==
-                         OT_PSKC_MAX_SIZE,
-                     ret = false);
+        otbrVerifyOrExit(value->valuestring != nullptr, ret = false);
+        otbrVerifyOrExit(Hex2BytesJsonString(std::string(value->valuestring), aDataset.mPskc.m8, OT_PSKC_MAX_SIZE) ==
+                             OT_PSKC_MAX_SIZE,
+                         ret = false);
         aDataset.mComponents.mIsPskcPresent = true;
     }
     else if (cJSON_IsNull(value))
@@ -822,7 +819,7 @@ bool JsonActiveDataset2Dataset(const cJSON *jsonActiveDataset, otOperationalData
     value = cJSON_GetObjectItemCaseSensitive(jsonActiveDataset, "SecurityPolicy");
     if (cJSON_IsObject(value))
     {
-        VerifyOrExit(Json2SecurityPolicy(value, aDataset.mSecurityPolicy), ret = false);
+        otbrVerifyOrExit(Json2SecurityPolicy(value, aDataset.mSecurityPolicy), ret = false);
         aDataset.mComponents.mIsSecurityPolicyPresent = true;
     }
     else if (cJSON_IsNull(value))
@@ -850,8 +847,8 @@ bool JsonActiveDatasetString2Dataset(const std::string &aJsonActiveDataset, otOp
     cJSON *jsonActiveDataset;
     bool   ret = true;
 
-    VerifyOrExit((jsonActiveDataset = cJSON_Parse(aJsonActiveDataset.c_str())) != nullptr, ret = false);
-    VerifyOrExit(cJSON_IsObject(jsonActiveDataset), ret = false);
+    otbrVerifyOrExit((jsonActiveDataset = cJSON_Parse(aJsonActiveDataset.c_str())) != nullptr, ret = false);
+    otbrVerifyOrExit(cJSON_IsObject(jsonActiveDataset), ret = false);
 
     ret = JsonActiveDataset2Dataset(jsonActiveDataset, aDataset);
 
@@ -868,13 +865,13 @@ bool JsonPendingDatasetString2Dataset(const std::string &aJsonPendingDataset, ot
     otTimestamp timestamp;
     bool        ret = true;
 
-    VerifyOrExit((jsonDataset = cJSON_Parse(aJsonPendingDataset.c_str())) != nullptr, ret = false);
-    VerifyOrExit(cJSON_IsObject(jsonDataset), ret = false);
+    otbrVerifyOrExit((jsonDataset = cJSON_Parse(aJsonPendingDataset.c_str())) != nullptr, ret = false);
+    otbrVerifyOrExit(cJSON_IsObject(jsonDataset), ret = false);
 
     value = cJSON_GetObjectItemCaseSensitive(jsonDataset, "ActiveDataset");
     if (cJSON_IsObject(value))
     {
-        VerifyOrExit(JsonActiveDataset2Dataset(value, aDataset), ret = false);
+        otbrVerifyOrExit(JsonActiveDataset2Dataset(value, aDataset), ret = false);
     }
     else if (cJSON_IsString(value))
     {
@@ -883,20 +880,20 @@ bool JsonPendingDatasetString2Dataset(const std::string &aJsonPendingDataset, ot
 
         len =
             Hex2BytesJsonString(std::string(value->valuestring), datasetTlvs.mTlvs, OT_OPERATIONAL_DATASET_MAX_LENGTH);
-        VerifyOrExit(len > 0, ret = false);
+        otbrVerifyOrExit(len > 0, ret = false);
         datasetTlvs.mLength = len;
 
-        VerifyOrExit(otDatasetParseTlvs(&datasetTlvs, &aDataset) == OT_ERROR_NONE, ret = false);
+        otbrVerifyOrExit(otDatasetParseTlvs(&datasetTlvs, &aDataset) == OT_ERROR_NONE, ret = false);
     }
     else
     {
-        ExitNow(ret = false);
+        otbrExitNow(ret = false);
     }
 
     value = cJSON_GetObjectItemCaseSensitive(jsonDataset, "PendingTimestamp");
     if (cJSON_IsObject(value))
     {
-        VerifyOrExit(Json2Timestamp(value, timestamp), ret = false);
+        otbrVerifyOrExit(Json2Timestamp(value, timestamp), ret = false);
         aDataset.mPendingTimestamp                      = timestamp;
         aDataset.mComponents.mIsPendingTimestampPresent = true;
     }
@@ -906,7 +903,7 @@ bool JsonPendingDatasetString2Dataset(const std::string &aJsonPendingDataset, ot
     }
     else if (value != nullptr)
     {
-        ExitNow(ret = false);
+        otbrExitNow(ret = false);
     }
 
     value = cJSON_GetObjectItemCaseSensitive(jsonDataset, "Delay");

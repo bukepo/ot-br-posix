@@ -29,7 +29,7 @@
 #ifndef OPENTHREAD_PLATFORM_CONFIG_H_
 #define OPENTHREAD_PLATFORM_CONFIG_H_
 
-#include "openthread-core-config.h"
+#include "core/openthread-core-config.h"
 
 #ifdef OPENTHREAD_POSIX_CONFIG_FILE
 #include OPENTHREAD_POSIX_CONFIG_FILE

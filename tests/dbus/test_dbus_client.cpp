@@ -36,7 +36,7 @@
 #include <dbus/dbus.h>
 #include <unistd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "dbus/client/thread_api_dbus.hpp"
 #include "dbus/common/constants.hpp"
 #if OTBR_ENABLE_TELEMETRY_DATA_API
@@ -327,9 +327,9 @@ int main()
     dbus_error_init(&error);
     connection = UniqueDBusConnection(dbus_bus_get(DBUS_BUS_SYSTEM, &error));
 
-    VerifyOrExit(connection != nullptr);
+    otbrVerifyOrExit(connection != nullptr);
 
-    VerifyOrExit(dbus_bus_register(connection.get(), &error) == true);
+    otbrVerifyOrExit(dbus_bus_register(connection.get(), &error) == true);
 
     api = std::unique_ptr<ThreadApiDBus>(new ThreadApiDBus(connection.get()));
 

@@ -56,7 +56,7 @@ bool InfraLinkSelector::LinkInfo::Update(LinkState aState)
 {
     bool changed = mState != aState;
 
-    VerifyOrExit(changed);
+    otbrVerifyOrExit(changed);
 
     if (mState == kUpAndRunning && aState != kUpAndRunning)
     {
@@ -75,7 +75,7 @@ InfraLinkSelector::InfraLinkSelector(std::vector<const char *> aInfraLinkNames)
     if (mInfraLinkNames.size() >= 2)
     {
         mNetlinkSocket = CreateNetLinkRouteSocket(RTMGRP_LINK);
-        VerifyOrDie(mNetlinkSocket != -1, "Failed to create netlink socket");
+        otbrVerifyOrDie(mNetlinkSocket != -1, "Failed to create netlink socket");
     }
 
     for (const char *name : mInfraLinkNames)
@@ -118,9 +118,9 @@ const char *InfraLinkSelector::SelectGeneric(void)
     auto                         now                   = Clock::now();
     LinkInfo                    *currentInfraLinkInfo  = nullptr;
 
-    VerifyOrExit(!mInfraLinkNames.empty(), mCurrentInfraLink = kDefaultInfraLinkName);
-    VerifyOrExit(mInfraLinkNames.size() > 1, mCurrentInfraLink = mInfraLinkNames.front());
-    VerifyOrExit(mRequireReselect, assert(mCurrentInfraLink != nullptr));
+    otbrVerifyOrExit(!mInfraLinkNames.empty(), mCurrentInfraLink = kDefaultInfraLinkName);
+    otbrVerifyOrExit(mInfraLinkNames.size() > 1, mCurrentInfraLink = mInfraLinkNames.front());
+    otbrVerifyOrExit(mRequireReselect, assert(mCurrentInfraLink != nullptr));
 
     otbrLogInfo("Evaluating infra link among %zu netifs:", mInfraLinkNames.size());
 
@@ -132,7 +132,7 @@ const char *InfraLinkSelector::SelectGeneric(void)
         otbrLogInfo("\tInfra link %s is in state %s", mCurrentInfraLink,
                     LinkStateToString(currentInfraLinkInfo->mState));
 
-        VerifyOrExit(currentInfraLinkInfo->mState != kUpAndRunning);
+        otbrVerifyOrExit(currentInfraLinkInfo->mState != kUpAndRunning);
     }
 
     // Select an infra link with best state.
@@ -155,10 +155,10 @@ const char *InfraLinkSelector::SelectGeneric(void)
             }
         }
 
-        VerifyOrExit(bestInfraLink != mCurrentInfraLink);
+        otbrVerifyOrExit(bestInfraLink != mCurrentInfraLink);
 
         // Prefer `mCurrentInfraLink` if no other infra link is up and running
-        VerifyOrExit(mCurrentInfraLink == nullptr || bestState == kUpAndRunning);
+        otbrVerifyOrExit(mCurrentInfraLink == nullptr || bestState == kUpAndRunning);
 
         // Prefer `mCurrentInfraLink` if it's down for less than `kInfraLinkSelectionDelay`
         if (mCurrentInfraLink != nullptr && currentInfraLinkInfo->mWasUpAndRunning)
@@ -173,7 +173,7 @@ const char *InfraLinkSelector::SelectGeneric(void)
                 otbrLogInfo("Infra link %s was running %lldms ago, wait for %lldms to recheck.", mCurrentInfraLink,
                             timeSinceLastRunning.count(), delay.count());
                 mTaskRunner.Post(delay, [this]() { mRequireReselect = true; });
-                ExitNow();
+                otbrExitNow();
             }
         }
 
@@ -213,12 +213,12 @@ InfraLinkSelector::LinkState InfraLinkSelector::QueryInfraLinkState(const char *
     InfraLinkSelector::LinkState state = kInvalid;
 
     sock = SocketWithCloseExec(AF_INET6, SOCK_DGRAM, IPPROTO_IP, kSocketBlock);
-    VerifyOrDie(sock != -1, "Failed to create AF_INET6 socket.");
+    otbrVerifyOrDie(sock != -1, "Failed to create AF_INET6 socket.");
 
     memset(&ifReq, 0, sizeof(ifReq));
     strncpy(ifReq.ifr_name, aInfraLinkName, sizeof(ifReq.ifr_name) - 1);
 
-    VerifyOrExit(ioctl(sock, SIOCGIFFLAGS, &ifReq) != -1);
+    otbrVerifyOrExit(ioctl(sock, SIOCGIFFLAGS, &ifReq) != -1);
 
     state = (ifReq.ifr_flags & IFF_UP) ? ((ifReq.ifr_flags & IFF_RUNNING) ? kUpAndRunning : kUp) : kDown;
 
@@ -264,7 +264,7 @@ void InfraLinkSelector::ReceiveNetLinkMessage(void)
     if (len < 0)
     {
         otbrLogWarning("Failed to receive netlink message: %s", strerror(errno));
-        ExitNow();
+        otbrExitNow();
     }
 
     for (struct nlmsghdr *header = &msgBuffer.mHeader; NLMSG_OK(header, static_cast<size_t>(len));
@@ -308,7 +308,7 @@ void InfraLinkSelector::HandleInfraLinkStateChange(uint32_t aInfraLinkIndex)
         }
     }
 
-    VerifyOrExit(infraLinkName != nullptr);
+    otbrVerifyOrExit(infraLinkName != nullptr);
 
     {
         LinkInfo &linkInfo  = mInfraLinkInfos[infraLinkName];

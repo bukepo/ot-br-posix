@@ -41,7 +41,6 @@
 #include <unistd.h>
 
 #include "common/code_utils.hpp"
-#include "common/logging.hpp"
 
 #if OPENTHREAD_POSIX_CONFIG_BACKTRACE_ENABLE
 #if OPENTHREAD_POSIX_CONFIG_ANDROID_ENABLE || defined(__GLIBC__)

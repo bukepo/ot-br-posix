@@ -26,13 +26,9 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-set(OT_PLATFORM_LIB "openthread-posix" PARENT_SCOPE)
-
-add_library(ot-posix-config INTERFACE)
-
 option(OT_DAEMON "Enable daemon mode" OFF)
 if(OT_DAEMON)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_DAEMON_ENABLE=1"
     )
 
@@ -47,60 +43,60 @@ endif()
 
 option(OT_POSIX_INSTALL_EXTERNAL_ROUTES "Install External Routes as IPv6 routes" ON)
 if(OT_POSIX_INSTALL_EXTERNAL_ROUTES)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_INSTALL_EXTERNAL_ROUTES_ENABLE=1"
     )
 else()
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_INSTALL_EXTERNAL_ROUTES_ENABLE=0"
     )
 endif()
 
 option(OT_POSIX_VIRTUAL_TIME "enable virtual time" OFF)
 if(OT_POSIX_VIRTUAL_TIME)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_VIRTUAL_TIME=1"
     )
 endif()
 
 option(OT_POSIX_MAX_POWER_TABLE  "enable max power table" OFF)
 if(OT_POSIX_MAX_POWER_TABLE)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_MAX_POWER_TABLE_ENABLE=1"
     )
 endif()
 
 option(OT_POSIX_SECURE_SETTINGS "enable secure settings" OFF)
 if (OT_POSIX_SECURE_SETTINGS)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_SECURE_SETTINGS_ENABLE=1"
     )
 endif()
 
 option(OT_POSIX_RCP_HDLC_BUS "enable RCP HDLC bus" OFF)
 if(OT_POSIX_RCP_HDLC_BUS)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_SPINEL_HDLC_INTERFACE_ENABLE=1"
     )
 endif()
 
 option(OT_POSIX_RCP_SPI_BUS "enable RCP SPI bus" OFF)
 if(OT_POSIX_RCP_SPI_BUS)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_SPINEL_SPI_INTERFACE_ENABLE=1"
     )
 endif()
 
 option(OT_POSIX_RCP_VENDOR_BUS "enable RCP vendor bus" OFF)
 if(OT_POSIX_RCP_VENDOR_BUS)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_SPINEL_VENDOR_INTERFACE_ENABLE=1"
     )
 endif()
 
 set(OT_POSIX_NAT64_CIDR "192.168.255.0/24" CACHE STRING "NAT64 CIDR for OpenThread NAT64")
 if(OT_POSIX_NAT64_CIDR)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_NAT64_CIDR=\"${OT_POSIX_NAT64_CIDR}\""
     )
 endif()
@@ -112,7 +108,7 @@ endif()
 set(CMAKE_EXE_LINKER_FLAGS "-rdynamic ${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)
 
 if(OT_ANDROID_NDK)
-    target_compile_options(ot-posix-config INTERFACE -Wno-sign-compare)
+    target_compile_options(otbr-config INTERFACE -Wno-sign-compare)
 endif()
 
 add_library(openthread-posix
@@ -157,16 +153,16 @@ target_link_libraries(openthread-posix
         openthread-radio-spinel
         openthread-spinel-rcp
         openthread-url
+        otbr-config
         ot-config-ftd
         ot-config
-        ot-posix-config
-        $<$<NOT:$<BOOL:${OT_ANDROID_NDK}>>:util>
+        util
         $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Linux>:rt>
 )
 
 option(OT_TARGET_OPENWRT "enable openthread posix for OpenWRT" OFF)
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT OT_TARGET_OPENWRT)
-    target_compile_definitions(ot-posix-config
+    target_compile_definitions(otbr-config
         INTERFACE "OPENTHREAD_POSIX_CONFIG_NAT64_AIL_PREFIX_ENABLE=1"
     )
     target_link_libraries(openthread-posix PRIVATE anl)
@@ -188,8 +184,12 @@ target_include_directories(openthread-posix PRIVATE
     ${OT_PUBLIC_INCLUDES}
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/src/core
-    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/third_party/mbedtls/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/include
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src
+    ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src/core
     PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/src/posix/platform/include
 )
 
@@ -205,5 +205,8 @@ target_include_directories(ot-posix-test-settings
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/src/core
         ${PROJECT_SOURCE_DIR}/src/posix/platform/include
+        ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/include
+        ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src
+        ${PROJECT_SOURCE_DIR}/third_party/openthread/repo/src/core
 )
 add_test(NAME ot-posix-test-settings COMMAND ot-posix-test-settings)

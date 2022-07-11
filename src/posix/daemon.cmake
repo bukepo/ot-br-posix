@@ -45,9 +45,7 @@ target_link_libraries(ot-daemon PRIVATE
     openthread-radio-spinel
     openthread-spinel-rcp
     ${OT_MBEDTLS}
-    ot-posix-config
-    ot-config-ftd
-    ot-config
+    otbr-config
 )
 
 if(OT_LINKER_MAP)
@@ -73,8 +71,7 @@ target_compile_options(ot-ctl PRIVATE
 
 target_link_libraries(ot-ctl PRIVATE
     ${READLINE_LINK_LIBRARIES}
-    ot-posix-config
-    ot-config
+    otbr-config
 )
 
 if(OT_LINKER_MAP)
@@ -89,5 +86,9 @@ target_include_directories(ot-ctl PRIVATE ${COMMON_INCLUDES})
 
 install(TARGETS ot-daemon
     DESTINATION sbin)
-install(TARGETS ot-ctl
-    DESTINATION bin)
+
+if(CMAKE_VERSION VERSION_LESS 3.13)
+    install(PROGRAMS $<TARGET_FILE:ot-ctl> DESTINATION sbin)
+else()
+    install(TARGETS ot-ctl DESTINATION sbin)
+endif()

@@ -82,10 +82,7 @@ static int OnHeaderComplete(http_parser *parser)
     return 0;
 }
 
-static int OnHandlerData(http_parser *, const char *, size_t)
-{
-    return 0;
-}
+static int OnHandlerData(http_parser *, const char *, size_t) { return 0; }
 
 static int OnHeaderField(http_parser *parser, const char *at, size_t len)
 {
@@ -111,10 +108,7 @@ static int OnHeaderData(http_parser *parser, const char *at, size_t len)
     return 0;
 }
 
-Parser::Parser(Request *aRequest)
-{
-    mParser.data = aRequest;
-}
+Parser::Parser(Request *aRequest) { mParser.data = aRequest; }
 
 void Parser::Init(void)
 {
@@ -129,10 +123,7 @@ void Parser::Init(void)
     http_parser_init(&mParser, HTTP_REQUEST);
 }
 
-void Parser::Process(const char *aBuf, size_t aLength)
-{
-    http_parser_execute(&mParser, &mSettings, aBuf, aLength);
-}
+void Parser::Process(const char *aBuf, size_t aLength) { http_parser_execute(&mParser, &mSettings, aBuf, aLength); }
 
 } // namespace rest
 } // namespace otbr

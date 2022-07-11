@@ -85,10 +85,7 @@ void RestWebServer::Update(MainloopContext &aMainloop)
     return;
 }
 
-void RestWebServer::Process(const MainloopContext &aMainloop)
-{
-    UpdateConnections(aMainloop.mReadFdSet);
-}
+void RestWebServer::Process(const MainloopContext &aMainloop) { UpdateConnections(aMainloop.mReadFdSet); }
 
 void RestWebServer::UpdateConnections(const fd_set &aReadFdSet)
 {
@@ -150,19 +147,19 @@ void RestWebServer::InitializeListenFd(void)
     int32_t     no  = 0;
 
     mListenFd = SocketWithCloseExec(AF_INET6, SOCK_STREAM, 0, kSocketNonBlock);
-    VerifyOrExit(mListenFd != -1, err = errno, error = OTBR_ERROR_REST, errorMessage = "socket");
+    otbrVerifyOrExit(mListenFd != -1, err = errno, error = OTBR_ERROR_REST, errorMessage = "socket");
 
     ret = setsockopt(mListenFd, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char *>(&no), sizeof(no));
-    VerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "sock opt v6only");
+    otbrVerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "sock opt v6only");
 
     ret = setsockopt(mListenFd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&yes), sizeof(yes));
-    VerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "sock opt reuseaddr");
+    otbrVerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "sock opt reuseaddr");
 
     ret = bind(mListenFd, reinterpret_cast<struct sockaddr *>(&mAddress), sizeof(mAddress));
-    VerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "bind");
+    otbrVerifyOrExit(ret == 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "bind");
 
     ret = listen(mListenFd, 5);
-    VerifyOrExit(ret >= 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "listen");
+    otbrVerifyOrExit(ret >= 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "listen");
 
 exit:
 
@@ -171,7 +168,7 @@ exit:
         otbrLogErr("InitializeListenFd error %s : %s", errorMessage.c_str(), strerror(err));
     }
 
-    VerifyOrDie(error == OTBR_ERROR_NONE, "otbr rest server init error");
+    otbrVerifyOrDie(error == OTBR_ERROR_NONE, "otbr rest server init error");
 }
 
 otbrError RestWebServer::Accept(int aListenFd)
@@ -186,9 +183,9 @@ otbrError RestWebServer::Accept(int aListenFd)
     fd  = accept(aListenFd, reinterpret_cast<struct sockaddr *>(&mAddress), &addrlen);
     err = errno;
 
-    VerifyOrExit(fd >= 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "accept");
+    otbrVerifyOrExit(fd >= 0, err = errno, error = OTBR_ERROR_REST, errorMessage = "accept");
 
-    VerifyOrExit(SetFdNonblocking(fd), err = errno, error = OTBR_ERROR_REST; errorMessage = "set nonblock");
+    otbrVerifyOrExit(SetFdNonblocking(fd), err = errno, error = OTBR_ERROR_REST; errorMessage = "set nonblock");
 
     CreateNewConnection(fd);
 
@@ -231,7 +228,7 @@ bool RestWebServer::SetFdNonblocking(int32_t fd)
 
     oldMode = fcntl(fd, F_GETFL);
 
-    VerifyOrExit(fcntl(fd, F_SETFL, oldMode | O_NONBLOCK) >= 0, ret = false);
+    otbrVerifyOrExit(fcntl(fd, F_SETFL, oldMode | O_NONBLOCK) >= 0, ret = false);
 
 exit:
     return ret;

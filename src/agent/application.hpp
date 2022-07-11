@@ -140,10 +140,7 @@ public:
      *
      * @returns The border agent.
      */
-    BorderAgent &GetBorderAgent(void)
-    {
-        return mBorderAgent;
-    }
+    BorderAgent &GetBorderAgent(void) { return mBorderAgent; }
 #endif
 
 #if OTBR_ENABLE_BACKBONE_ROUTER
@@ -152,10 +149,7 @@ public:
      *
      * @returns The backbone agent.
      */
-    BackboneRouter::BackboneAgent &GetBackboneAgent(void)
-    {
-        return mBackboneAgent;
-    }
+    BackboneRouter::BackboneAgent &GetBackboneAgent(void) { return mBackboneAgent; }
 #endif
 
 #if OTBR_ENABLE_OPENWRT
@@ -164,10 +158,7 @@ public:
      *
      * @returns The UBus agent.
      */
-    ubus::UBusAgent &GetUBusAgent(void)
-    {
-        return mUbusAgent;
-    }
+    ubus::UBusAgent &GetUBusAgent(void) { return mUbusAgent; }
 #endif
 
 #if OTBR_ENABLE_REST_SERVER
@@ -176,10 +167,7 @@ public:
      *
      * @returns The rest web server.
      */
-    rest::RestWebServer &GetRestWebServer(void)
-    {
-        return mRestWebServer;
-    }
+    rest::RestWebServer &GetRestWebServer(void) { return mRestWebServer; }
 #endif
 
 #if OTBR_ENABLE_DBUS_SERVER
@@ -188,10 +176,7 @@ public:
      *
      * @returns The DBus agent.
      */
-    DBus::DBusAgent &GetDBusAgent(void)
-    {
-        return mDBusAgent;
-    }
+    DBus::DBusAgent &GetDBusAgent(void) { return mDBusAgent; }
 #endif
 
 private:

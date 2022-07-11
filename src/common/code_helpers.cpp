@@ -26,7 +26,7 @@
  *    POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 uint64_t ConvertOpenThreadUint64(const uint8_t *aValue)
 {

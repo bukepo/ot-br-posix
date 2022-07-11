@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <functional>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "utils/dns_utils.hpp"
 
 namespace otbr {
@@ -108,7 +108,7 @@ otbrError Publisher::EncodeTxtData(const TxtList &aTxtList, std::vector<uint8_t>
             entryLength += txtEntry.mValue.size() + sizeof(uint8_t); // for `=` char.
         }
 
-        VerifyOrExit(entryLength <= kMaxTextEntrySize, error = OTBR_ERROR_INVALID_ARGS);
+        otbrVerifyOrExit(entryLength <= kMaxTextEntrySize, error = OTBR_ERROR_INVALID_ARGS);
 
         aTxtData.push_back(static_cast<uint8_t>(entryLength));
         aTxtData.insert(aTxtData.end(), txtEntry.mKey.begin(), txtEntry.mKey.end());
@@ -142,7 +142,7 @@ otbrError Publisher::DecodeTxtData(Publisher::TxtList &aTxtList, const uint8_t *
         uint16_t entryEnd  = keyStart + entrySize;
         uint16_t keyEnd    = keyStart;
 
-        VerifyOrExit(entryEnd <= aTxtLength, error = OTBR_ERROR_PARSE);
+        otbrVerifyOrExit(entryEnd <= aTxtLength, error = OTBR_ERROR_PARSE);
 
         while (keyEnd < entryEnd && aTxtData[keyEnd] != '=')
         {
@@ -318,10 +318,7 @@ std::string Publisher::MakeFullServiceName(const std::string &aName, const std::
     return aName + "." + aType + ".local";
 }
 
-std::string Publisher::MakeFullHostName(const std::string &aName)
-{
-    return aName + ".local";
-}
+std::string Publisher::MakeFullHostName(const std::string &aName) { return aName + ".local"; }
 
 void Publisher::AddServiceRegistration(ServiceRegistrationPtr &&aServiceReg)
 {
@@ -334,7 +331,7 @@ void Publisher::RemoveServiceRegistration(const std::string &aName, const std::s
     ServiceRegistrationPtr serviceReg;
 
     otbrLogInfo("Removing service %s.%s", aName.c_str(), aType.c_str());
-    VerifyOrExit(it != mServiceRegistrations.end());
+    otbrVerifyOrExit(it != mServiceRegistrations.end());
 
     // Keep the ServiceRegistration around before calling `Complete`
     // to invoke the callback. This is for avoiding invalid access
@@ -364,7 +361,7 @@ Publisher::ResultCallback Publisher::HandleDuplicateServiceRegistration(const st
 {
     ServiceRegistration *serviceReg = FindServiceRegistration(aName, aType);
 
-    VerifyOrExit(serviceReg != nullptr);
+    otbrVerifyOrExit(serviceReg != nullptr);
 
     if (serviceReg->IsOutdated(aHostName, aName, aType, aSubTypeList, aPort, aTxtData))
     {
@@ -401,7 +398,7 @@ Publisher::ResultCallback Publisher::HandleDuplicateHostRegistration(const std::
 {
     HostRegistration *hostReg = FindHostRegistration(aName);
 
-    VerifyOrExit(hostReg != nullptr);
+    otbrVerifyOrExit(hostReg != nullptr);
 
     if (hostReg->IsOutdated(aName, aAddresses))
     {
@@ -443,7 +440,7 @@ void Publisher::RemoveHostRegistration(const std::string &aName, otbrError aErro
     HostRegistrationPtr hostReg;
 
     otbrLogInfo("Removing host %s", aName.c_str());
-    VerifyOrExit(it != mHostRegistrations.end());
+    otbrVerifyOrExit(it != mHostRegistrations.end());
 
     // Keep the HostRegistration around before calling `Complete`
     // to invoke the callback. This is for avoiding invalid access
@@ -464,10 +461,7 @@ Publisher::HostRegistration *Publisher::FindHostRegistration(const std::string &
     return it != mHostRegistrations.end() ? it->second.get() : nullptr;
 }
 
-Publisher::Registration::~Registration(void)
-{
-    TriggerCompleteCallback(OTBR_ERROR_ABORTED);
-}
+Publisher::Registration::~Registration(void) { TriggerCompleteCallback(OTBR_ERROR_ABORTED); }
 
 bool Publisher::ServiceRegistration::IsOutdated(const std::string &aHostName,
                                                 const std::string &aName,
@@ -549,7 +543,7 @@ void Publisher::UpdateMdnsResponseCounters(otbr::MdnsResponseCounters &aCounters
 
 void Publisher::UpdateEmaLatency(uint32_t &aEmaLatency, uint32_t aLatency, otbrError aError)
 {
-    VerifyOrExit(aError != OTBR_ERROR_ABORTED);
+    otbrVerifyOrExit(aError != OTBR_ERROR_ABORTED);
 
     if (!aEmaLatency)
     {

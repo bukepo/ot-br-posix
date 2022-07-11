@@ -44,7 +44,7 @@
 
 #include <openthread/dnssd_server.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/dns_utils.hpp"
 #include "common/logging.hpp"
 #include "utils/dns_utils.hpp"
@@ -285,8 +285,8 @@ std::string DiscoveryProxy::TranslateDomain(const std::string &aName, const std:
     std::string hostName;
     std::string domain;
 
-    VerifyOrExit(OTBR_ERROR_NONE == SplitFullHostName(aName, hostName, domain), targetName = aName);
-    VerifyOrExit(DnsLabelsEqual(domain, "local."), targetName = aName);
+    otbrVerifyOrExit(OTBR_ERROR_NONE == SplitFullHostName(aName, hostName, domain), targetName = aName);
+    otbrVerifyOrExit(DnsLabelsEqual(domain, "local."), targetName = aName);
 
     targetName = hostName + "." + aTargetDomain;
 
@@ -316,10 +316,7 @@ int DiscoveryProxy::GetServiceSubscriptionCount(const DnsNameInfo &aNameInfo) co
     return count;
 }
 
-uint32_t DiscoveryProxy::CapTtl(uint32_t aTtl)
-{
-    return std::min(aTtl, static_cast<uint32_t>(kServiceTtlCapLimit));
-}
+uint32_t DiscoveryProxy::CapTtl(uint32_t aTtl) { return std::min(aTtl, static_cast<uint32_t>(kServiceTtlCapLimit)); }
 
 } // namespace Dnssd
 } // namespace otbr

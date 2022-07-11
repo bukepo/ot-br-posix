@@ -42,7 +42,7 @@
 
 #include <openthread/backbone_router_ftd.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 
 namespace otbr {
 namespace BackboneRouter {
@@ -89,7 +89,7 @@ void BackboneAgent::HandleBackboneRouterState(void)
 
     otbrLogDebug("BackboneAgent: HandleBackboneRouterState: state=%d, mBackboneRouterState=%d", state,
                  mBackboneRouterState);
-    VerifyOrExit(mBackboneRouterState != state);
+    otbrVerifyOrExit(mBackboneRouterState != state);
 
     mBackboneRouterState = state;
 
@@ -170,7 +170,7 @@ void BackboneAgent::HandleBackboneRouterDomainPrefixEvent(otBackboneRouterDomain
         assert(mDomainPrefix.IsValid());
     }
 
-    VerifyOrExit(IsPrimary() && aEvent != OT_BACKBONE_ROUTER_DOMAIN_PREFIX_REMOVED);
+    otbrVerifyOrExit(IsPrimary() && aEvent != OT_BACKBONE_ROUTER_DOMAIN_PREFIX_REMOVED);
 
 #if OTBR_ENABLE_DUA_ROUTING
     mDuaRoutingManager.Disable();

@@ -46,10 +46,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/dns_utils.hpp"
 #include "common/logging.hpp"
-#include "common/time.hpp"
+#include "common/time_utils.hpp"
 
 namespace otbr {
 
@@ -220,10 +220,7 @@ PublisherMDnsSd::PublisherMDnsSd(StateCallback aCallback)
 {
 }
 
-PublisherMDnsSd::~PublisherMDnsSd(void)
-{
-    Stop(kNormalStop);
-}
+PublisherMDnsSd::~PublisherMDnsSd(void) { Stop(kNormalStop); }
 
 otbrError PublisherMDnsSd::Start(void)
 {
@@ -232,14 +229,11 @@ otbrError PublisherMDnsSd::Start(void)
     return OTBR_ERROR_NONE;
 }
 
-bool PublisherMDnsSd::IsStarted(void) const
-{
-    return mState == State::kReady;
-}
+bool PublisherMDnsSd::IsStarted(void) const { return mState == State::kReady; }
 
 void PublisherMDnsSd::Stop(StopMode aStopMode)
 {
-    VerifyOrExit(mState == State::kReady);
+    otbrVerifyOrExit(mState == State::kReady);
 
     // If we get a `kDNSServiceErr_ServiceNotRunning` and need to
     // restart the `Publisher`, we should immediately de-allocate
@@ -274,7 +268,7 @@ DNSServiceErrorType PublisherMDnsSd::CreateSharedHostsRef(void)
 {
     DNSServiceErrorType dnsError = kDNSServiceErr_NoError;
 
-    VerifyOrExit(mHostsRef == nullptr);
+    otbrVerifyOrExit(mHostsRef == nullptr);
 
     dnsError = DNSServiceCreateConnection(&mHostsRef);
     otbrLogDebug("Created new shared DNSServiceRef: %p", mHostsRef);
@@ -285,7 +279,7 @@ exit:
 
 void PublisherMDnsSd::DeallocateHostsRef(void)
 {
-    VerifyOrExit(mHostsRef != nullptr);
+    otbrVerifyOrExit(mHostsRef != nullptr);
 
     HandleServiceRefDeallocating(mHostsRef);
     DNSServiceRefDeallocate(mHostsRef);
@@ -391,7 +385,7 @@ void PublisherMDnsSd::Process(const MainloopContext &aMainloop)
             otbrLogWarning("Need to reconnect to mdnsd");
             Stop(kStopOnServiceNotRunningError);
             Start();
-            ExitNow();
+            otbrExitNow();
         }
     }
 exit:
@@ -413,10 +407,10 @@ void PublisherMDnsSd::DnssdServiceRegistration::Update(MainloopContext &aMainloo
 {
     int fd;
 
-    VerifyOrExit(mServiceRef != nullptr);
+    otbrVerifyOrExit(mServiceRef != nullptr);
 
     fd = DNSServiceRefSockFD(mServiceRef);
-    VerifyOrExit(fd != -1);
+    otbrVerifyOrExit(fd != -1);
 
     FD_SET(fd, &aMainloop.mReadFdSet);
     aMainloop.mMaxFd = std::max(aMainloop.mMaxFd, fd);
@@ -430,12 +424,12 @@ void PublisherMDnsSd::DnssdServiceRegistration::Process(const MainloopContext   
 {
     int fd;
 
-    VerifyOrExit(mServiceRef != nullptr);
+    otbrVerifyOrExit(mServiceRef != nullptr);
 
     fd = DNSServiceRefSockFD(mServiceRef);
-    VerifyOrExit(fd != -1);
+    otbrVerifyOrExit(fd != -1);
 
-    VerifyOrExit(FD_ISSET(fd, &aMainloop.mReadFdSet));
+    otbrVerifyOrExit(FD_ISSET(fd, &aMainloop.mReadFdSet));
     aReadyServices.push_back(mServiceRef);
 
 exit:
@@ -527,13 +521,13 @@ otbrError PublisherMDnsSd::DnssdHostRegistration::Register(void)
         DNSRecordRef recordRef = nullptr;
 
         dnsError = GetPublisher().CreateSharedHostsRef();
-        VerifyOrExit(dnsError == kDNSServiceErr_NoError);
+        otbrVerifyOrExit(dnsError == kDNSServiceErr_NoError);
 
         dnsError = DNSServiceRegisterRecord(GetPublisher().mHostsRef, &recordRef, kDNSServiceFlagsShared,
                                             kDNSServiceInterfaceIndexAny, MakeFullHostName(mName).c_str(),
                                             kDNSServiceType_AAAA, kDNSServiceClass_IN, sizeof(address.m8), address.m8,
                                             /* ttl */ 0, HandleRegisterResult, this);
-        VerifyOrExit(dnsError == kDNSServiceErr_NoError);
+        otbrVerifyOrExit(dnsError == kDNSServiceErr_NoError);
 
         mAddrRecordRefs.push_back(recordRef);
         mAddrRegistered.push_back(false);
@@ -552,7 +546,7 @@ void PublisherMDnsSd::DnssdHostRegistration::Unregister(void)
 {
     DNSServiceErrorType dnsError;
 
-    VerifyOrExit(GetPublisher().mHostsRef != nullptr);
+    otbrVerifyOrExit(GetPublisher().mHostsRef != nullptr);
 
     for (size_t index = 0; index < mAddrRecordRefs.size(); index++)
     {
@@ -646,12 +640,12 @@ otbrError PublisherMDnsSd::PublishServiceImpl(const std::string &aHostName,
     {
         error = OTBR_ERROR_INVALID_STATE;
         std::move(aCallback)(error);
-        ExitNow();
+        otbrExitNow();
     }
 
     aCallback = HandleDuplicateServiceRegistration(aHostName, aName, aType, sortedSubTypeList, aPort, aTxtData,
                                                    std::move(aCallback));
-    VerifyOrExit(!aCallback.IsNull());
+    otbrVerifyOrExit(!aCallback.IsNull());
 
     serviceReg = new DnssdServiceRegistration(aHostName, aName, aType, sortedSubTypeList, aPort, aTxtData,
                                               std::move(aCallback), this);
@@ -667,7 +661,7 @@ void PublisherMDnsSd::UnpublishService(const std::string &aName, const std::stri
 {
     otbrError error = OTBR_ERROR_NONE;
 
-    VerifyOrExit(mState == Publisher::State::kReady, error = OTBR_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(mState == Publisher::State::kReady, error = OTBR_ERROR_INVALID_STATE);
     RemoveServiceRegistration(aName, aType, OTBR_ERROR_ABORTED);
 
 exit:
@@ -685,11 +679,11 @@ otbrError PublisherMDnsSd::PublishHostImpl(const std::string &aName,
     {
         error = OTBR_ERROR_INVALID_STATE;
         std::move(aCallback)(error);
-        ExitNow();
+        otbrExitNow();
     }
 
     aCallback = HandleDuplicateHostRegistration(aName, aAddresses, std::move(aCallback));
-    VerifyOrExit(!aCallback.IsNull());
+    otbrVerifyOrExit(!aCallback.IsNull());
 
     hostReg = new DnssdHostRegistration(aName, aAddresses, std::move(aCallback), this);
     AddHostRegistration(std::unique_ptr<DnssdHostRegistration>(hostReg));
@@ -704,7 +698,7 @@ void PublisherMDnsSd::UnpublishHost(const std::string &aName, ResultCallback &&a
 {
     otbrError error = OTBR_ERROR_NONE;
 
-    VerifyOrExit(mState == Publisher::State::kReady, error = OTBR_ERROR_INVALID_STATE);
+    otbrVerifyOrExit(mState == Publisher::State::kReady, error = OTBR_ERROR_INVALID_STATE);
     RemoveHostRegistration(aName, OTBR_ERROR_ABORTED);
 
 exit:
@@ -731,7 +725,7 @@ std::string PublisherMDnsSd::MakeRegType(const std::string &aType, SubTypeList a
 
 void PublisherMDnsSd::SubscribeService(const std::string &aType, const std::string &aInstanceName)
 {
-    VerifyOrExit(mState == Publisher::State::kReady);
+    otbrVerifyOrExit(mState == Publisher::State::kReady);
     mSubscribedServices.push_back(MakeUnique<ServiceSubscription>(*this, aType, aInstanceName));
 
     otbrLogInfo("Subscribe service %s.%s (total %zu)", aInstanceName.c_str(), aType.c_str(),
@@ -754,7 +748,7 @@ void PublisherMDnsSd::UnsubscribeService(const std::string &aType, const std::st
 {
     ServiceSubscriptionList::iterator it;
 
-    VerifyOrExit(mState == Publisher::State::kReady);
+    otbrVerifyOrExit(mState == Publisher::State::kReady);
     it = std::find_if(mSubscribedServices.begin(), mSubscribedServices.end(),
                       [&aType, &aInstanceName](const std::unique_ptr<ServiceSubscription> &aService) {
                           return aService->mType == aType && aService->mInstanceName == aInstanceName;
@@ -789,7 +783,7 @@ otbrError PublisherMDnsSd::DnsErrorToOtbrError(int32_t aErrorCode)
 
 void PublisherMDnsSd::SubscribeHost(const std::string &aHostName)
 {
-    VerifyOrExit(mState == State::kReady);
+    otbrVerifyOrExit(mState == State::kReady);
     mSubscribedHosts.push_back(MakeUnique<HostSubscription>(*this, aHostName));
 
     otbrLogInfo("Subscribe host %s (total %zu)", aHostName.c_str(), mSubscribedHosts.size());
@@ -804,7 +798,7 @@ void PublisherMDnsSd::UnsubscribeHost(const std::string &aHostName)
 {
     HostSubscriptionList ::iterator it;
 
-    VerifyOrExit(mState == Publisher::State::kReady);
+    otbrVerifyOrExit(mState == Publisher::State::kReady);
     it = std::find_if(
         mSubscribedHosts.begin(), mSubscribedHosts.end(),
         [&aHostName](const std::unique_ptr<HostSubscription> &aHost) { return aHost->mHostName == aHostName; });
@@ -819,20 +813,11 @@ exit:
     return;
 }
 
-Publisher *Publisher::Create(StateCallback aCallback)
-{
-    return new PublisherMDnsSd(aCallback);
-}
+Publisher *Publisher::Create(StateCallback aCallback) { return new PublisherMDnsSd(aCallback); }
 
-void Publisher::Destroy(Publisher *aPublisher)
-{
-    delete static_cast<PublisherMDnsSd *>(aPublisher);
-}
+void Publisher::Destroy(Publisher *aPublisher) { delete static_cast<PublisherMDnsSd *>(aPublisher); }
 
-void PublisherMDnsSd::ServiceRef::Release(void)
-{
-    DeallocateServiceRef();
-}
+void PublisherMDnsSd::ServiceRef::Release(void) { DeallocateServiceRef(); }
 
 void PublisherMDnsSd::ServiceRef::DeallocateServiceRef(void)
 {
@@ -848,7 +833,7 @@ void PublisherMDnsSd::ServiceRef::Update(MainloopContext &aMainloop) const
 {
     int fd;
 
-    VerifyOrExit(mServiceRef != nullptr);
+    otbrVerifyOrExit(mServiceRef != nullptr);
 
     fd = DNSServiceRefSockFD(mServiceRef);
     assert(fd != -1);
@@ -863,7 +848,7 @@ void PublisherMDnsSd::ServiceRef::Process(const MainloopContext      &aMainloop,
 {
     int fd;
 
-    VerifyOrExit(mServiceRef != nullptr);
+    otbrVerifyOrExit(mServiceRef != nullptr);
 
     fd = DNSServiceRefSockFD(mServiceRef);
     assert(fd != -1);
@@ -912,7 +897,7 @@ void PublisherMDnsSd::ServiceSubscription::HandleBrowseResult(DNSServiceRef     
                 aFlags & kDNSServiceFlagsAdd ? "add" : "remove", aInstanceName, aType, aInterfaceIndex, aFlags,
                 aErrorCode);
 
-    VerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
+    otbrVerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
 
     if (aFlags & kDNSServiceFlagsAdd)
     {
@@ -1019,9 +1004,9 @@ void PublisherMDnsSd::ServiceInstanceResolution::HandleResolveResult(DNSServiceR
     otbrLogInfo("DNSServiceResolve reply: %s host %s:%d, TXT=%dB inf %u, flags=%u", aFullName, aHostTarget, aPort,
                 aTxtLen, aInterfaceIndex, aFlags);
 
-    VerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
+    otbrVerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
 
-    SuccessOrExit(error = SplitFullServiceInstanceName(aFullName, instanceName, type, domain));
+    otbrSuccessOrExit(error = SplitFullServiceInstanceName(aFullName, instanceName, type, domain));
 
     mInstanceInfo.mNetifIndex = aInterfaceIndex;
     mInstanceInfo.mName       = instanceName;
@@ -1098,12 +1083,13 @@ void PublisherMDnsSd::ServiceInstanceResolution::HandleGetAddrInfoResult(DNSServ
             "DNSServiceGetAddrInfo reply: flags=%" PRIu32 ", host=%s, sa_family=%u, error=%" PRId32, aFlags, aHostName,
             static_cast<unsigned int>(aAddress->sa_family), aErrorCode);
 
-    VerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
-    VerifyOrExit((aFlags & kDNSServiceFlagsAdd) && aAddress->sa_family == AF_INET6);
+    otbrVerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
+    otbrVerifyOrExit((aFlags & kDNSServiceFlagsAdd) && aAddress->sa_family == AF_INET6);
 
     address.CopyFrom(*reinterpret_cast<const struct sockaddr_in6 *>(aAddress));
-    VerifyOrExit(!address.IsUnspecified() && !address.IsLinkLocal() && !address.IsMulticast() && !address.IsLoopback(),
-                 otbrLogDebug("DNSServiceGetAddrInfo ignores address %s", address.ToString().c_str()));
+    otbrVerifyOrExit(!address.IsUnspecified() && !address.IsLinkLocal() && !address.IsMulticast() &&
+                         !address.IsLoopback(),
+                     otbrLogDebug("DNSServiceGetAddrInfo ignores address %s", address.ToString().c_str()));
 
     mInstanceInfo.mAddresses.push_back(address);
     mInstanceInfo.mTtl = aTtl;
@@ -1175,12 +1161,12 @@ void PublisherMDnsSd::HostSubscription::HandleResolveResult(DNSServiceRef       
             "DNSServiceGetAddrInfo reply: flags=%" PRIu32 ", host=%s, sa_family=%u, error=%" PRId32, aFlags, aHostName,
             static_cast<unsigned int>(aAddress->sa_family), aErrorCode);
 
-    VerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
-    VerifyOrExit((aFlags & kDNSServiceFlagsAdd) && aAddress->sa_family == AF_INET6);
+    otbrVerifyOrExit(aErrorCode == kDNSServiceErr_NoError);
+    otbrVerifyOrExit((aFlags & kDNSServiceFlagsAdd) && aAddress->sa_family == AF_INET6);
 
     address.CopyFrom(*reinterpret_cast<const struct sockaddr_in6 *>(aAddress));
-    VerifyOrExit(!address.IsLinkLocal(),
-                 otbrLogDebug("DNSServiceGetAddrInfo ignore link-local address %s", address.ToString().c_str()));
+    otbrVerifyOrExit(!address.IsLinkLocal(),
+                     otbrLogDebug("DNSServiceGetAddrInfo ignore link-local address %s", address.ToString().c_str()));
 
     mHostInfo.mHostName = aHostName;
     mHostInfo.mAddresses.push_back(address);

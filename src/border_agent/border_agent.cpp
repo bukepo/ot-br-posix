@@ -61,7 +61,7 @@
 #include "backbone_router/backbone_agent.hpp"
 #endif
 #include "common/byteswap.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 #include "common/tlv.hpp"
 #include "common/types.hpp"
@@ -174,16 +174,13 @@ void BorderAgent::Init(void)
     Start();
 }
 
-void BorderAgent::Deinit(void)
-{
-    Stop();
-}
+void BorderAgent::Deinit(void) { Stop(); }
 
 void BorderAgent::Start(void)
 {
     otbrError error = OTBR_ERROR_NONE;
 
-    SuccessOrExit(error = mPublisher->Start());
+    otbrSuccessOrExit(error = mPublisher->Start());
 #if OTBR_ENABLE_SRP_ADVERTISING_PROXY
     mAdvertisingProxy.Start();
 #endif
@@ -480,7 +477,7 @@ void BorderAgent::UnpublishMeshCopService(void)
 
 void BorderAgent::UpdateMeshCopService(void)
 {
-    VerifyOrExit(mPublisher->IsStarted(), mPublisher->Start());
+    otbrVerifyOrExit(mPublisher->IsStarted(), mPublisher->Start());
     PublishMeshCopService();
 exit:
     return;
@@ -496,7 +493,7 @@ void BorderAgent::HandleUpdateVendorMeshCoPTxtEntries(std::map<std::string, std:
 
 void BorderAgent::HandleThreadStateChanged(otChangedFlags aFlags)
 {
-    VerifyOrExit(mPublisher != nullptr);
+    otbrVerifyOrExit(mPublisher != nullptr);
 
     if (aFlags & OT_CHANGED_THREAD_ROLE)
     {

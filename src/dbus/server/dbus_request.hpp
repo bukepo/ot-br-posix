@@ -40,7 +40,7 @@
 #define OTBR_LOG_TAG "DBUS"
 #endif
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/logging.hpp"
 
 #include "dbus/common/dbus_message_dump.hpp"
@@ -124,8 +124,8 @@ public:
     {
         UniqueDBusMessage reply{dbus_message_new_method_return(mMessage)};
 
-        VerifyOrExit(reply != nullptr);
-        VerifyOrExit(otbr::DBus::TupleToDBusMessage(*reply, aReply) == OTBR_ERROR_NONE);
+        otbrVerifyOrExit(reply != nullptr);
+        otbrVerifyOrExit(otbr::DBus::TupleToDBusMessage(*reply, aReply) == OTBR_ERROR_NONE);
 
         if (otbrLogGetLevel() >= OTBR_LOG_DEBUG)
         {
@@ -169,7 +169,7 @@ public:
         {
             reply = UniqueDBusMessage(dbus_message_new_error(mMessage, ConvertToDBusErrorName(aError), nullptr));
         }
-        VerifyOrDie(reply != nullptr, "Failed to allocate message");
+        otbrVerifyOrDie(reply != nullptr, "Failed to allocate message");
 
         if (aResult.HasValue())
         {
@@ -178,7 +178,7 @@ public:
 
             dbus_message_iter_init_append(reply.get(), &replyIter);
             error = DBusMessageEncode(&replyIter, *aResult);
-            VerifyOrDie(error == OTBR_ERROR_NONE, "Failed to encode result");
+            otbrVerifyOrDie(error == OTBR_ERROR_NONE, "Failed to encode result");
         }
 
         dbus_connection_send(mConnection, reply.get(), nullptr);

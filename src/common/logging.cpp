@@ -46,8 +46,8 @@
 
 #include <sstream>
 
-#include "common/code_utils.hpp"
-#include "common/time.hpp"
+#include "common/code_helpers.hpp"
+#include "common/time_utils.hpp"
 
 static otbrLogLevel sLevel            = OTBR_LOG_INFO;
 static const char   sLevelString[][8] = {
@@ -57,16 +57,10 @@ static const char   sLevelString[][8] = {
 static otbrLogLevel sDefaultLevel = OTBR_LOG_INFO;
 
 /** Get the current debug log level */
-otbrLogLevel otbrLogGetLevel(void)
-{
-    return sLevel;
-}
+otbrLogLevel otbrLogGetLevel(void) { return sLevel; }
 
 /** Get the default log level */
-otbrLogLevel otbrLogGetDefaultLevel(void)
-{
-    return sDefaultLevel;
-}
+otbrLogLevel otbrLogGetDefaultLevel(void) { return sDefaultLevel; }
 
 /**
  * Set current log level.
@@ -265,7 +259,4 @@ const char *otbrErrorString(otbrError aError)
     return error;
 }
 
-void otbrLogDeinit(void)
-{
-    closelog();
-}
+void otbrLogDeinit(void) { closelog(); }

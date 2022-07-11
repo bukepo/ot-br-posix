@@ -43,9 +43,9 @@
 #include <queue>
 #include <set>
 
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/mainloop.hpp"
-#include "common/time.hpp"
+#include "common/time_utils.hpp"
 
 namespace otbr {
 

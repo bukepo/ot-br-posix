@@ -47,9 +47,9 @@
 #include <avahi-common/watch.h>
 
 #include "mdns.hpp"
-#include "common/code_utils.hpp"
+#include "common/code_helpers.hpp"
 #include "common/mainloop.hpp"
-#include "common/time.hpp"
+#include "common/time_utils.hpp"
 
 /**
  * @addtogroup border-router-mdns
