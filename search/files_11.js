@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['web_5fserver_2ecpp',['web_server.cpp',['../d0/d32/web__server_8cpp.html',1,'']]],
-  ['web_5fserver_2ehpp',['web_server.hpp',['../d9/dd1/web__server_8hpp.html',1,'']]],
-  ['wpan_5fservice_2ecpp',['wpan_service.cpp',['../db/dc0/wpan__service_8cpp.html',1,'']]],
-  ['wpan_5fservice_2ehpp',['wpan_service.hpp',['../dd/dca/wpan__service_8hpp.html',1,'']]]
+  ['vendor_2ehpp_1026',['vendor.hpp',['../d2/d92/vendor_8hpp.html',1,'']]]
 ];

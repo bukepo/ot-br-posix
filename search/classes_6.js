@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['leaderdata',['LeaderData',['../dd/d1d/structotbr_1_1DBus_1_1LeaderData.html',1,'otbr::DBus']]],
-  ['linkmodeconfig',['LinkModeConfig',['../d1/d82/structotbr_1_1DBus_1_1LinkModeConfig.html',1,'otbr::DBus']]]
+  ['ip6address_895',['Ip6Address',['../d2/dfe/classotbr_1_1Ip6Address.html',1,'otbr']]],
+  ['ip6prefix_896',['Ip6Prefix',['../da/d3a/classotbr_1_1Ip6Prefix.html',1,'otbr::Ip6Prefix'],['../da/d56/structotbr_1_1DBus_1_1Ip6Prefix.html',1,'otbr::DBus::Ip6Prefix']]],
+  ['ipcounters_897',['IpCounters',['../da/d27/structotbr_1_1DBus_1_1IpCounters.html',1,'otbr::DBus']]]
 ];
