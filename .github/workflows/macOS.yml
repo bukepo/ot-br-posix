@@ -42,7 +42,19 @@ concurrency:
 
 jobs:
   build-check:
+    name: macos-${{ matrix.CC }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - CC: clang
+            CXX: clang++
+          - CC: gcc
+            CXX: g++
     runs-on: macos-12
+    env:
+      CC: ${{ matrix.CC }}
+      CXX: ${{ matrix.CXX }}
     steps:
     - uses: actions/checkout@v3
       with:
