@@ -210,6 +210,10 @@ do_simulation()
 
     print_result tests/scripts/auto-attach
     print_result tests/scripts/infra-link-selector
+
+    if have nm && nm "${OTBR_TOP_BUILDDIR}/src/agent/otbr-agent" | grep -q InitializeFilter; then
+        print_result tests/scripts/bpf-filter-test
+    fi
 }
 
 main()

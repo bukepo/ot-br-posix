@@ -228,6 +228,12 @@ else()
     target_compile_definitions(otbr-config INTERFACE OTBR_ENABLE_DHCP6_PD=0)
 endif()
 
+option(OTBR_BPF_FILTER "Enable embedded eBPF/TC network filtering" OFF)
+
+if (OTBR_BPF_FILTER)
+    target_compile_definitions(otbr-config INTERFACE OTBR_ENABLE_BPF_FILTER=1)
+endif()
+
 option(OTBR_VENDOR_SERVER "Enable vendor server" OFF)
 if (OTBR_VENDOR_SERVER)
     target_compile_definitions(otbr-config INTERFACE OTBR_ENABLE_VENDOR_SERVER=1)

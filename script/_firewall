@@ -29,15 +29,37 @@
 
 FIREWALL_SERVICE=/etc/init.d/otbr-firewall
 
-sudo modprobe ip6table_filter || true
+OTBR_TOP_BUILDDIR="${OTBR_TOP_BUILDDIR:-${BUILD_DIR}/otbr}"
 
-FIREWALL="${FIREWALL:-1}"
+use_bpf()
+{
+    have nm && [[ -f "${OTBR_TOP_BUILDDIR}/src/agent/otbr-agent" ]] && nm "${OTBR_TOP_BUILDDIR}/src/agent/otbr-agent" | grep -q InitializeFilter
+}
+
+evaluate_firewall()
+{
+    FIREWALL="${FIREWALL:-1}"
+    if use_bpf; then
+        FIREWALL=0
+    fi
+    export FIREWALL
+    if [[ ${FIREWALL} == 1 ]]; then
+        sudo modprobe ip6table_filter || true
+    fi
+}
+
+firewall_stop_internal()
+{
+    if with DOCKER; then
+        service otbr-firewall stop || true
+    elif have systemctl; then
+        sudo systemctl stop otbr-firewall || true
+    fi
+}
 
 firewall_uninstall()
 {
-    with FIREWALL || return 0
-
-    firewall_stop
+    firewall_stop_internal
     if have systemctl; then
         sudo systemctl disable otbr-firewall || true
     fi
@@ -50,6 +72,7 @@ firewall_uninstall()
 
 firewall_install()
 {
+    evaluate_firewall
     with FIREWALL || return 0
 
     sudo cp script/otbr-firewall $FIREWALL_SERVICE
@@ -62,7 +85,11 @@ firewall_install()
 
 firewall_start()
 {
-    with FIREWALL || return 0
+    evaluate_firewall
+    with FIREWALL || {
+        firewall_stop_internal
+        return 0
+    }
 
     if with DOCKER; then
         service otbr-firewall start || die 'Failed to start firewall service'
@@ -73,11 +100,7 @@ firewall_start()
 
 firewall_stop()
 {
+    evaluate_firewall
     with FIREWALL || return 0
-
-    if with DOCKER; then
-        service otbr-firewall stop || true
-    elif have systemctl; then
-        sudo systemctl stop otbr-firewall || true
-    fi
+    firewall_stop_internal
 }

@@ -56,6 +56,11 @@
 #include "common/types.hpp"
 #include "host/thread_host.hpp"
 
+#if OTBR_ENABLE_BPF_FILTER
+#include "host/rcp_host.hpp"
+#include "platform/bpf/filter_loader.hpp"
+#endif
+
 #ifdef OTBR_ENABLE_PLATFORM_ANDROID
 #include <log/log.h>
 #ifndef __ANDROID__
@@ -407,6 +412,49 @@ static int realmain(int argc, char *argv[])
 
         gApp = &app;
 
+        app.Init(restListenAddress, restListenPort);
+
+#if OTBR_ENABLE_BPF_FILTER
+        if (host->GetCoprocessorType() == OT_COPROCESSOR_RCP)
+        {
+            otInstance *otInstance = static_cast<otbr::Host::RcpHost *>(host.get())->GetInstance();
+            if (otbr::bpf::InitializeFilter(otInstance) == OT_ERROR_NONE)
+            {
+                otbrLogNotice("BPF filter initialized");
+                if (interfaceName && interfaceName[0] != '\0')
+                {
+                    if (otbr::bpf::AttachToInterface(interfaceName) == OT_ERROR_NONE)
+                    {
+                        otbrLogNotice("BPF filter attached to %s", interfaceName);
+                        otbr::bpf::UpdateFilterPrefixes();
+                        host->AddThreadStateChangedCallback([](otChangedFlags aFlags) {
+                            if (aFlags & (OT_CHANGED_THREAD_NETDATA | OT_CHANGED_THREAD_ROLE))
+                            {
+                                otbr::bpf::UpdateFilterPrefixes();
+                            }
+                        });
+                    }
+                    else
+                    {
+                        otbrLogWarning("Failed to attach BPF filter to %s", interfaceName);
+                    }
+                }
+                else
+                {
+                    otbrLogWarning("Thread interface is empty, BPF filter not attached");
+                }
+            }
+            else
+            {
+                otbrLogWarning("Failed to initialize BPF filter");
+            }
+        }
+        else
+        {
+            otbrLogWarning("BPF filter is only supported in RCP mode");
+        }
+#endif
+
 #if OTBR_ENABLE_BORDER_AGENT
 #if !defined(OTBR_VENDOR_NAME) || !defined(OTBR_PRODUCT_NAME)
 #ifdef OTBR_MESHCOP_SERVICE_INSTANCE_NAME
@@ -421,8 +469,6 @@ static int realmain(int argc, char *argv[])
 #endif
 #endif
 #endif
-
-        app.Init(restListenAddress, restListenPort);
 
 #ifndef OTBR_VENDOR_NAME
         if (app.GetHost().GetCoprocessorType() == OT_COPROCESSOR_RCP)
@@ -446,6 +492,14 @@ static int realmain(int argc, char *argv[])
 #endif
 
         ret = app.Run();
+
+#if OTBR_ENABLE_BPF_FILTER
+        if (host->GetCoprocessorType() == OT_COPROCESSOR_RCP)
+        {
+            otbr::bpf::DetachFromInterface(interfaceName);
+            otbr::bpf::DeinitializeFilter();
+        }
+#endif
 
         app.Deinit();
     }

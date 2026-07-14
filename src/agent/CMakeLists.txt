@@ -49,6 +49,7 @@ target_link_libraries(otbr-agent PRIVATE
     openthread-hdlc
     openthread-posix
     $<$<AND:$<BOOL:${OTBR_MDNS}>,$<NOT:$<STREQUAL:${OTBR_MDNS},openthread>>>:otbr-sdp-proxy>
+    $<$<BOOL:${OTBR_BPF_FILTER}>:otbr-bpf>
     otbr-host
     otbr-common
     otbr-utils

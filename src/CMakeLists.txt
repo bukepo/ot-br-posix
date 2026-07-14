@@ -26,6 +26,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
+add_subdirectory(platform)
 add_subdirectory(agent)
 if(OTBR_BORDER_AGENT)
     add_subdirectory(border_agent)

@@ -1,0 +1,357 @@
+#!/bin/bash
+#
+#  Copyright (c) 2026, The OpenThread Authors.
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#  3. Neither the name of the copyright holder nor the
+#     names of its contributors may be used to endorse or promote products
+#     derived from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+
+set -euxo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly SCRIPT_DIR
+
+# Default to build/otbr if top_builddir is not set
+ABS_TOP_BUILDDIR="$(cd "${top_builddir:-"${SCRIPT_DIR}"/../../build/otbr}" && pwd)"
+readonly ABS_TOP_BUILDDIR
+
+OTBR_AGENT="${ABS_TOP_BUILDDIR}/src/agent/otbr-agent"
+readonly OTBR_AGENT
+
+OT_RCP=$(command -v ot-rcp)
+readonly OT_RCP
+
+TEST_IF_0="wpan_test0"
+VETH_BACKBONE="veth_bf"
+VETH_PEER="veth_bf_peer"
+PEER_NS="peer_ns"
+INFRA_ADDR="fd12:3456:789a::1"
+
+at_exit()
+{
+    EXIT_CODE=$?
+
+    if [ -n "${TCPDUMP_PID:-}" ]; then
+        sudo kill "$TCPDUMP_PID" || true
+        echo "=== tcpdump.log ==="
+        cat tcpdump.log || true
+        rm -f tcpdump.log
+    fi
+
+    # Cleanup netns and veth
+    sudo ip netns del "${PEER_NS}" || true
+    sudo ip link del "${VETH_BACKBONE}" || true
+
+    sudo killall otbr-agent || true
+    sudo ip link del "${TEST_IF_0}" || true
+    rm -f omr_err.log ml_err.log
+    exit $EXIT_CODE
+}
+
+trap at_exit INT TERM EXIT
+
+# Setup veth pair and netns
+sudo ip link set dev lo xdp off || true
+sudo ip link add "$VETH_BACKBONE" type veth peer name "$VETH_PEER"
+
+sudo ip netns add "$PEER_NS"
+sudo ip link set "$VETH_PEER" netns "$PEER_NS"
+
+# Configure Backbone Interface (root ns)
+sudo sysctl -w net.ipv6.conf."$VETH_BACKBONE".accept_dad=0 || true
+sudo ip link set "$VETH_BACKBONE" up
+
+# Configure Peer Interface (peer_ns)
+sudo ip netns exec "$PEER_NS" sysctl -w net.ipv6.conf."$VETH_PEER".accept_dad=0 || true
+sudo ip netns exec "$PEER_NS" ip link set "$VETH_PEER" up
+
+# Start otbr-agent on TEST_IF_0, using VETH_BACKBONE as backbone interface
+sudo "${OTBR_AGENT}" -s --vendor-name ot --model-name ot -I "${TEST_IF_0}" -B "$VETH_BACKBONE" -v -d 7 "spinel+hdlc+forkpty://${OT_RCP}?forkpty-arg=1" &
+sleep 5
+
+# Verify BPF is attached to TEST_IF_0 egress
+sudo tc filter show dev "${TEST_IF_0}" egress | grep "bpf"
+
+# Form a Thread network
+OT_CTL="${ABS_TOP_BUILDDIR}/src/otctl/ot-ctl"
+sudo "$OT_CTL" -I wpan_test0 thread stop
+sudo "$OT_CTL" -I wpan_test0 dataset init new
+sudo "$OT_CTL" -I wpan_test0 dataset commit active
+sudo "$OT_CTL" -I wpan_test0 ifconfig up
+sudo "$OT_CTL" -I wpan_test0 thread start
+
+# Wait for it to become leader and set up prefixes
+STATE="detached"
+for _ in {1..15}; do
+    STATE=$(sudo "$OT_CTL" -I wpan_test0 state 2>/dev/null | head -n 1 | tr -d '\r' || true)
+    if [ "$STATE" = "leader" ]; then
+        break
+    fi
+    sleep 1
+done
+
+if [ "$STATE" != "leader" ]; then
+    echo "Failed to become leader, current state: $STATE"
+    sudo cat /var/log/syslog | grep otbr-agent | tail -n 50 || true
+    exit 1
+fi
+
+# Wait for Routing Manager to set up OMR prefix
+sleep 5
+
+# Debug: dump maps to log
+echo "Debug: allowed_dst dump:"
+sudo bpftool map dump name allowed_dst || true
+echo "Debug: thread_prefixes dump:"
+sudo bpftool map dump name thread_prefixes || true
+echo "Debug: filter_stats dump:"
+sudo bpftool map dump name filter_stats || true
+
+# Get Prefixes from BPF maps
+OMR_PREFIX=$(sudo bpftool map dump name allowed_dst | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    elements = []
+    if data:
+        if isinstance(data, list) and len(data) > 0 and "elements" in data[0]:
+            for m in data:
+                if m.get("elements"):
+                    elements = m["elements"]
+                    break
+        else:
+            elements = data
+    if elements:
+        bytes_list = elements[0]["key"]["prefix"]["in6_u"]["u6_addr8"]
+        parts = [f"{(bytes_list[i] << 8) + bytes_list[i+1]:04x}" for i in range(0, 8, 2)]
+        print(":".join(parts) + "::")
+except Exception as e:
+    print("Python error:", e, file=sys.stderr)
+    sys.exit(1)
+' 2>omr_err.log || cat omr_err.log)
+
+echo "Extracted OMR_PREFIX: $OMR_PREFIX"
+
+ML_PREFIX=$(sudo bpftool map dump name thread_prefixes | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    elements = []
+    if data:
+        if isinstance(data, list) and len(data) > 0 and 'elements' in data[0]:
+            for m in data:
+                if m.get('elements'):
+                    elements.extend(m['elements'])
+        else:
+            elements = data
+    omr = '${OMR_PREFIX}'
+    for entry in elements:
+        bytes_list = entry['key']['prefix']['in6_u']['u6_addr8']
+        parts = [f'{(bytes_list[i] << 8) + bytes_list[i+1]:04x}' for i in range(0, 8, 2)]
+        prefix = ':'.join(parts) + '::'
+        if prefix != omr:
+            print(prefix)
+            break
+except Exception as e:
+    print('Python error:', e, file=sys.stderr)
+    sys.exit(1)
+" 2>ml_err.log || cat ml_err.log)
+
+echo "Extracted ML_PREFIX: $ML_PREFIX"
+
+echo "OMR Prefix: $OMR_PREFIX"
+echo "ML Prefix: $ML_PREFIX"
+
+if [ -z "$OMR_PREFIX" ] || [ -z "$ML_PREFIX" ]; then
+    echo "Failed to retrieve prefixes from BPF maps"
+    exit 1
+fi
+
+OMR_ADDR="${OMR_PREFIX}2"
+ML_ADDR="${ML_PREFIX}2"
+OMR_SPOOF_ADDR="${OMR_PREFIX}99"
+
+# Get BR Link-Local Address on Backbone interface
+BR_LL_ADDR=""
+for _ in {1..5}; do
+    BR_LL_ADDR=$(ip -6 addr show dev "$VETH_BACKBONE" scope link | grep inet6 | awk '{print $2}' | cut -d/ -f1 | head -n 1 || true)
+    if [ -n "$BR_LL_ADDR" ]; then
+        break
+    fi
+    sleep 1
+done
+
+if [ -z "$BR_LL_ADDR" ]; then
+    echo "Failed to get BR Link-Local address"
+    exit 1
+fi
+echo "BR Link-Local Address: $BR_LL_ADDR"
+
+# Get BR MAC Address
+BR_MAC=$(ip link show "$VETH_BACKBONE" | grep link/ether | awk '{print $2}')
+echo "BR MAC Address: $BR_MAC"
+
+# Configure Peer Interface inside netns
+sudo ip netns exec "$PEER_NS" ip -6 addr add "${INFRA_ADDR}/64" dev "$VETH_PEER"
+sudo ip netns exec "$PEER_NS" ip -6 neighbor add "$BR_LL_ADDR" lladdr "$BR_MAC" dev "$VETH_PEER"
+sudo ip netns exec "$PEER_NS" ip -6 route add "${OMR_PREFIX}/64" via "$BR_LL_ADDR" dev "$VETH_PEER"
+sudo ip netns exec "$PEER_NS" ip -6 route add "${ML_PREFIX}/64" via "$BR_LL_ADDR" dev "$VETH_PEER"
+
+get_stats()
+{
+    sudo bpftool map dump name filter_stats | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+pass_val = 0
+drop_val = 0
+elements = []
+if data:
+    if isinstance(data, list) and len(data) > 0 and "elements" in data[0]:
+        for m in data:
+            if m.get("elements"):
+                elements = m["elements"]
+                break
+    else:
+        elements = data
+for entry in elements:
+    if entry["key"] == 0:
+        pass_val = entry["value"]
+    elif entry["key"] == 1:
+        drop_val = entry["value"]
+print(f"{pass_val} {drop_val}")
+'
+}
+
+verify_case()
+{
+    local test_name=$1
+    local expected_pass_delta=$2
+    local expected_drop_delta=$3
+    local cmd=$4
+
+    read -r pass_before drop_before <<<"$(get_stats)"
+    echo "Stats before $test_name: PASS=$pass_before DROP=$drop_before"
+
+    echo "Running test: $test_name"
+    echo "Command: $cmd"
+    set +e
+    eval "$cmd" >/dev/null 2>&1
+    set -e
+
+    read -r pass_after drop_after <<<"$(get_stats)"
+    echo "Stats after $test_name: PASS=$pass_after DROP=$drop_after"
+
+    echo "DEBUG: Raw values before math: pass_before='$pass_before' pass_after='$pass_after' drop_before='$drop_before' drop_after='$drop_after'"
+    declare -p pass_before pass_after drop_before drop_after || true
+
+    local pass_delta=$((pass_after - pass_before))
+    local drop_delta=$((drop_after - drop_before))
+
+    echo "Test $test_name: PASS delta=$pass_delta (expected $expected_pass_delta), DROP delta=$drop_delta (expected $expected_drop_delta)"
+
+    # Relaxed assertions:
+    # 1. If we expect PASS, we must get AT LEAST that many PASSes.
+    # 2. If we expect DROP, we must get AT LEAST that many DROPs.
+    # 3. If we expect 0 DROPs, we must get EXACTLY 0 DROPs.
+    local failed=0
+    if [ "$expected_pass_delta" -gt 0 ] && [ "$pass_delta" -lt "$expected_pass_delta" ]; then
+        echo "FAIL: PASS delta $pass_delta < expected $expected_pass_delta"
+        failed=1
+    fi
+    if [ "$expected_drop_delta" -gt 0 ] && [ "$drop_delta" -lt "$expected_drop_delta" ]; then
+        echo "FAIL: DROP delta $drop_delta < expected $expected_drop_delta"
+        failed=1
+    fi
+    if [ "$expected_drop_delta" -eq 0 ] && [ "$drop_delta" -ne 0 ]; then
+        echo "FAIL: Unexpected DROP delta $drop_delta (expected 0)"
+        failed=1
+    fi
+
+    if [ $failed -eq 1 ]; then
+        echo "Test $test_name FAILED!"
+        exit 1
+    fi
+    echo "Test $test_name PASSED"
+}
+
+# Check if maps exist and have entries
+echo "Dumping thread_prefixes map:"
+sudo bpftool map dump name thread_prefixes || echo "Failed to dump thread_prefixes"
+echo "Dumping allowed_dst map:"
+sudo bpftool map dump name allowed_dst || echo "Failed to dump allowed_dst"
+
+# Verify that the maps are not empty
+thread_prefixes_ok=0
+allowed_dst_ok=0
+
+sudo bpftool map dump name thread_prefixes | grep -q "key" && thread_prefixes_ok=1 || true
+sudo bpftool map dump name allowed_dst | grep -q "key" && allowed_dst_ok=1 || true
+
+if [ $thread_prefixes_ok -ne 1 ] || [ $allowed_dst_ok -ne 1 ]; then
+    echo "BPF filter prefix update verification FAILED!"
+    [ $thread_prefixes_ok -ne 1 ] && echo "thread_prefixes map is empty or missing"
+    [ $allowed_dst_ok -ne 1 ] && echo "allowed_dst map is empty or missing"
+    exit 1
+fi
+echo "BPF filter prefix update verification PASSED"
+
+# Run Filtering Tests
+if command -v tcpdump >/dev/null 2>&1; then
+    sudo sh -c "tcpdump -i '$VETH_BACKBONE' -vv -n -e -l > tcpdump.log 2>&1" &
+    TCPDUMP_PID=$!
+    # Give tcpdump a moment to start
+    sleep 1
+fi
+
+# 1. Allowed Ingress Unicast (INFRA -> OMR)
+# Request (INFRA -> OMR) should PASS.
+# Expected: PASS +1, DROP 0
+verify_case "Allowed Unicast" 1 0 "sudo ip netns exec $PEER_NS ping6 -I $INFRA_ADDR $OMR_ADDR -c 1 -W 1"
+
+# 2. Blocked Ingress Source / Spoofing (OMR -> OMR)
+# Assign spoofed OMR IP to peer interface inside netns so we can send from it.
+sudo ip netns exec "$PEER_NS" ip -6 addr add "${OMR_SPOOF_ADDR}/64" dev "$VETH_PEER"
+# Add static neighbor for target OMR address to avoid NS packets
+sudo ip netns exec "$PEER_NS" ip -6 neighbor add "$OMR_ADDR" lladdr "$BR_MAC" dev "$VETH_PEER"
+# Request (OMR_SPOOF -> OMR) should DROP.
+# Expected: PASS 0, DROP +1
+verify_case "Spoofed Source" 0 1 "sudo ip netns exec $PEER_NS ping6 -I $OMR_SPOOF_ADDR $OMR_ADDR -c 1 -W 1"
+# Cleanup spoofed IP and neighbor entry
+sudo ip netns exec "$PEER_NS" ip -6 neighbor del "$OMR_ADDR" dev "$VETH_PEER" || true
+sudo ip netns exec "$PEER_NS" ip -6 addr del "${OMR_SPOOF_ADDR}/64" dev "$VETH_PEER"
+
+# 3. Blocked Ingress Destination / Mesh-Local (INFRA -> ML)
+# Request (INFRA -> ML) should DROP.
+# Expected: PASS 0, DROP +1
+verify_case "Mesh-Local Destination" 0 1 "sudo ip netns exec $PEER_NS ping6 -I $INFRA_ADDR $ML_ADDR -c 1 -W 1"
+
+# 4. Local Traffic Pass (BR Host -> OMR/ML)
+# Packets originating from BR host itself should bypass the filter.
+# We verify this by ensuring they do not trigger any DROPs.
+# Note: Pings will timeout because the target addresses are not assigned to any node,
+# but the packets must still go egress on wpan_test0 and NOT be dropped by BPF.
+verify_case "Local Traffic OMR" 0 0 "ping6 -c 1 -W 1 $OMR_ADDR"
+verify_case "Local Traffic ML" 0 0 "ping6 -c 1 -W 1 $ML_ADDR"
+
+echo "BPF filtering tests passed!"
